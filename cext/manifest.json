@@ -1,0 +1,15 @@
+{
+  "manifest_version": 2,
+
+  "name": "TabProject",
+  "description": "This extension stores project-like collections of tabs to the browser bookmarks.",
+  "version": "1.0",
+
+  "permissions": [
+    "tabs", "bookmarks"
+  ],
+  "browser_action": {
+    "default_icon": "icon.png",
+    "default_popup": "popup.html"
+  }
+}
