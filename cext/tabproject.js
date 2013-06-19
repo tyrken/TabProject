@@ -22,7 +22,7 @@ var TPM = (function () {
   my.getProjectPageUrl = function (name) {
     return my.ProjectPageBase + encodeURIComponent(name);
   };
-  
+
   my.isProjectPageUrl = function (url) {
     return startsWith(url, TPM.ProjectPageBase);
   };
@@ -32,10 +32,10 @@ var TPM = (function () {
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
   }
 
-  my.scanTabsForProjects = function () {
-    var projects = [];
+  my.scanTabsForProjects = function (callback) {
     console.log('Starting scanTabs');
     chrome.tabs.query({}, function (tabs) {
+      var projects = [];
       var curProject = null;
       $.each(tabs, function(i, tab) {
         console.log('TAB i=' + i + ', index=' + tab.index + ', title=' + tab.title);
@@ -52,9 +52,9 @@ var TPM = (function () {
           console.log('ProjectTab', tabDesc);
         }
       });
+      console.log('Finished scanTabs', projects);
+      callback(projects);
     });
-    console.log('Finished scanTabs', projects);
-    return projects;
   };
 
   return my;
@@ -87,26 +87,26 @@ var Popup = (function (TPM) {
   };
 
   my.init = function () {
-
     // TODO enable button on name !blank
     $('#newProjectButton').click( function() {
       my.addNewProject();
     });
 
-    var projects = TPM.scanTabsForProjects();
-    var items = ['<ul>'];
-    $.each(projects, function(i, project) {
-      items.push('<li>'+project.name+'</li><ul>');
-      $.each(project.tabDescs, function(j, tabDesc) {
-        items.push('<li>'+tabDesc.title+'</li>');
-      });
+    TPM.scanTabsForProjects(function(projects) {
+      var items = ['<ul>'];
+      $.each(projects, function(i, project) {
+        items.push('<li>'+project.name+'</li><ul>');
+        $.each(project.tabDescs, function(j, tabDesc) {
+          items.push('<li>'+tabDesc.title+'</li>');
+        });
+        items.push('</ul>');
+      });  // close each()
+      if (projects.length === 0) {
+        items.push('<li>No Projects defined yet!</li>');
+      }
       items.push('</ul>');
-    });  // close each()
-    if (projects.length === 0) {
-      items.push('<li>No Projects defined yet!</li>');
-    }
-    items.push('</ul>');
-    $('#projectList').append( items.join('') );    
+      $('#projectList').append( items.join('') );
+    });
   };
 
   return my;
