@@ -17,10 +17,12 @@ var TPM = (function () {
 
   var baseBookMarkName = "TabProject";
 
-  my.ProjectPageBase = 'chrome-extension://__MSG_@@extension_id__/tabproject.html?name=';
+  my.ProjectPageBase = 'chrome-extension://' + chrome.i18n.getMessage("@@extension_id") + '/tabproject.html?name=';
+
   my.getProjectPageUrl = function (name) {
     return my.ProjectPageBase + encodeURIComponent(name);
   };
+  
   my.isProjectPageUrl = function (url) {
     return startsWith(url, TPM.ProjectPageBase);
   };
@@ -100,6 +102,9 @@ var Popup = (function (TPM) {
       });
       items.push('</ul>');
     });  // close each()
+    if (projects.length === 0) {
+      items.push('<li>No Projects defined yet!</li>');
+    }
     items.push('</ul>');
     $('#projectList').append( items.join('') );    
   };
