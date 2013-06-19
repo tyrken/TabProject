@@ -1,31 +1,32 @@
-var TPM = (function () {
+"use strict";
 
+var TPM = (function () {
   var my = {};
-  
-  function startsWith = function (input, prefix) {
-    return input.slice(0, prefix.length) == prefix;
-  };
+
+  function startsWith(input, prefix) {
+    return input.slice(0, prefix.length) === prefix;
+  }
 
   my.getMWOPH = function () {
     return chrome.bookmarks.MAX_WRITE_OPERATIONS_PER_HOUR;
-  }
+  };
 
   my.getMSWOPM = function () {
     return chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE;
-  }
+  };
 
-  var baseBookMarkName= "TabProject";
+  var baseBookMarkName = "TabProject";
 
-  my.ProjectPageBase = 'chrome-extension://__MSG_@@extensionid/tabproject.html?name=';
+  my.ProjectPageBase = 'chrome-extension://__MSG_@@extension_id__/tabproject.html?name=';
   my.getProjectPageUrl = function (name) {
-    return my.ProjectPageBase+encodeURIComponent(name);
-  }
+    return my.ProjectPageBase + encodeURIComponent(name);
+  };
   my.isProjectPageUrl = function (url) {
     return startsWith(url, TPM.ProjectPageBase);
-  }
+  };
 
   function getParameterByName(url, name) {
-    var match = RegExp('[?&]' + name + '=([^&]*)').exec(url);
+    var match = new RegExp('[?&]' + name + '=([^&]*)').exec(url);
     return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
   }
 
@@ -34,27 +35,25 @@ var TPM = (function () {
     console.log('Starting scanTabs');
     chrome.tabs.query({}, function (tabs) {
       var curProject = null;
-      var length = arr.length,
-          tab = null;
-      for (var i = 0; i < length; i++) {
-        tabs = tabs[i];
-        if (tabs.index == 0) {
+      $.each(tabs, function(i, tab) {
+        console.log('TAB i=' + i + ', index=' + tab.index + ', title=' + tab.title);
+        if (tab.index === 0) {
           curProject = null;
         }
-        if (isProjectPageUrl(tabs.url)) {
-          curProject = { name: getParameterByName(tabs.url, 'name'), tabDescs: [] };
+        if (my.isProjectPageUrl(tab.url)) {
+          curProject = { name: getParameterByName(tab.url, 'name'), tabDescs: [] };
           projects.push(curProject);
           console.log('FirstProjectTab', curProject);
-        } else if (curProject != null) {
-          var tabDesc = { title: tab.title, url: tab.url; favIconUrl: tab.favIconUrl };
+        } else if (curProject !== null) {
+          var tabDesc = { title: tab.title, url: tab.url, favIconUrl: tab.favIconUrl };
           curProject.tabDescs.push(tabDesc);
           console.log('ProjectTab', tabDesc);
         }
-      }      
+      });
     });
-    console.log('Finished scanTabs');
+    console.log('Finished scanTabs', projects);
     return projects;
-  }
+  };
 
   return my;
 }());
@@ -76,18 +75,16 @@ var Popup = (function (TPM) {
   }
 
   my.addNewProject = function () {
-  alert("add");
-    var name = $('newProjectName').text();
+    var name = $('#newProjectName').val();
     if (isBlank(name)) {
-      message("You must enter a Project Name first!");
+      alert("You must enter a Project Name first!");
       return;
     }
     var projectPageUrl = TPM.getProjectPageUrl(name);
     chrome.tabs.create({url:projectPageUrl});
-  }
+  };
 
   my.init = function () {
-  alert("init");
 
     // TODO enable button on name !blank
     $('#newProjectButton').click( function() {
@@ -105,14 +102,13 @@ var Popup = (function (TPM) {
     });  // close each()
     items.push('</ul>');
     $('#projectList').append( items.join('') );    
-  }
+  };
 
   return my;
 }(TPM));
 
 
 document.addEventListener('DOMContentLoaded', function () {
-  alert("ONO");
   if (TPM.isProjectPageUrl(window.location.search)) {
 
   } else {
