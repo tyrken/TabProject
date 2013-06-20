@@ -1,5 +1,10 @@
 "use strict";
 
+function getParameterByName(url, name) {
+  var match = new RegExp('[?&]' + name + '=([^&]*)').exec(url);
+  return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
 var TPM = (function () {
   var my = {};
 
@@ -27,11 +32,6 @@ var TPM = (function () {
     return startsWith(url, TPM.ProjectPageBase);
   };
 
-  function getParameterByName(url, name) {
-    var match = new RegExp('[?&]' + name + '=([^&]*)').exec(url);
-    return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
-  }
-
   my.scanTabsForProjects = function (callback) {
     console.log('Starting scanTabs');
     chrome.tabs.query({}, function (tabs) {
@@ -57,66 +57,69 @@ var TPM = (function () {
     });
   };
 
+  function makeProjectBookmarks(project, projectNode) {
+    chrome.bookmarks.getChildren(projectNode.id, function (entries) {
+      $.each(project.tabDescs, function(j, tabDesc) {
+        var found = false;
+        $.each(entries, function(k, entry) {
+          if (entry.title === tabDesc.title || entry.url === tabDesc.url) {
+            found = true;
+            return false;
+          }
+        });
+        if (!found) {
+          chrome.bookmarks.create({'parentId': projectNode.id, 'title': tabDesc.title, url: tabDesc.url}, function(newProjectNode) {
+            console.log("Added new bookmark for "+tabDesc.title);
+          });
+        }
+      });
+    });
+  }
+
+  function makeProjectFolders(projects, baseNode) {
+    chrome.bookmarks.getChildren(baseNode.id, function (projectNodes) {
+      $.each(projects, function(j, project) {
+        var found = false;
+        $.each(projectNodes, function(k, projectNode) {
+          if (projectNode.title === project.name) {
+            found = true;
+            makeProjectBookmarks(project, projectNode);
+            return false;
+          }
+        });
+        if (!found) {
+          chrome.bookmarks.create({'parentId': baseNode.id, 'title': project.name}, function(newProjectNode) {
+            console.log("Added new folder for "+project.name);
+            makeProjectBookmarks(project, newProjectNode);
+          });
+        }
+      });
+    });
+  }
+
+  my.makeAllBookmarks = function (projects) {
+    var bookmarkBarId = '1'
+    chrome.bookmarks.getChildren(bookmarkBarId, function (results) {
+      var found = false;
+      $.each(results, function(i, node) {
+        if (node.title === baseBookMarkName) {
+          makeProjectFolders(projects, node);
+          found = true;
+          return false;
+        }
+      });
+      if (!found) {
+        console.log("Adding base folder!");
+        chrome.bookmarks.create({'parentId': bookmarkBar.id, 'title': baseBookMarkName}, function(newFolder) {
+          makeProjectFolders(projects, newFolder);
+        });
+      }
+    });
+  };
+
   return my;
 }());
 
-var Scanner = (function (TPM) {
-  var my = {};
 
 
 
-  return my;
-}(TPM));
-
-
-var Popup = (function (TPM) {
-  var my = {};
-
-  function isBlank(str) {
-    return (!str || /^\s*$/.test(str));
-  }
-
-  my.addNewProject = function () {
-    var name = $('#newProjectName').val();
-    if (isBlank(name)) {
-      alert("You must enter a Project Name first!");
-      return;
-    }
-    var projectPageUrl = TPM.getProjectPageUrl(name);
-    chrome.tabs.create({url:projectPageUrl});
-  };
-
-  my.init = function () {
-    // TODO enable button on name !blank
-    $('#newProjectButton').click( function() {
-      my.addNewProject();
-    });
-
-    TPM.scanTabsForProjects(function(projects) {
-      var items = ['<ul>'];
-      $.each(projects, function(i, project) {
-        items.push('<li>'+project.name+'</li><ul>');
-        $.each(project.tabDescs, function(j, tabDesc) {
-          items.push('<li>'+tabDesc.title+'</li>');
-        });
-        items.push('</ul>');
-      });  // close each()
-      if (projects.length === 0) {
-        items.push('<li>No Projects defined yet!</li>');
-      }
-      items.push('</ul>');
-      $('#projectList').append( items.join('') );
-    });
-  };
-
-  return my;
-}(TPM));
-
-
-document.addEventListener('DOMContentLoaded', function () {
-  if (TPM.isProjectPageUrl(window.location.search)) {
-
-  } else {
-    Popup.init();
-  }
-});
