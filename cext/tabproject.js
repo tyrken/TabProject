@@ -5,6 +5,17 @@ function getParameterByName(url, name) {
   return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
 }
 
+if (!Array.prototype.findObject) {
+  Array.prototype.findObject = function (predicate) {
+    for (var i = 0, j = this.length; i < j; ++i) {
+      if (predicate(this[i])) {
+        return this[i];
+      }
+    }
+    return null;
+  };
+}
+
 var TPM = (function () {
   var my = {};
 
@@ -20,9 +31,10 @@ var TPM = (function () {
     return chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE;
   };
 
+  var bookmarkBarId = '1'
   var baseBookMarkName = "TabProject";
 
-  my.ProjectPageBase = 'chrome-extension://' + chrome.i18n.getMessage("@@extension_id") + '/tabproject.html?name=';
+  my.ProjectPageBase = 'chrome-extension://' + chrome.i18n.getMessage("@@extension_id") + '/project.html?name=';
 
   my.getProjectPageUrl = function (name) {
     return my.ProjectPageBase + encodeURIComponent(name);
@@ -59,14 +71,14 @@ var TPM = (function () {
 
   function makeProjectBookmarks(project, projectNode) {
     chrome.bookmarks.getChildren(projectNode.id, function (entries) {
-      $.each(project.tabDescs, function(j, tabDesc) {
-        var found = false;
-        $.each(entries, function(k, entry) {
-          if (entry.title === tabDesc.title || entry.url === tabDesc.url) {
-            found = true;
-            return false;
-          }
+      var projectUrl = getProjectPageUrl(project.name);
+      if (!entries.findObject(function(entry) { return entry.url === projectUrl; })) {
+        chrome.bookmarks.create({'parentId': projectNode.id, 'title': project.name, url: projectUrl}, function(newProjectNode) {
+          console.log("Added new bookmark for project page "+project.name);
         });
+      }
+      $.each(project.tabDescs, function(j, tabDesc) {
+        var found = entries.findObject(function(entry) { return entry.url === tabDesc.url });
         if (!found) {
           chrome.bookmarks.create({'parentId': projectNode.id, 'title': tabDesc.title, url: tabDesc.url}, function(newProjectNode) {
             console.log("Added new bookmark for "+tabDesc.title);
@@ -79,15 +91,7 @@ var TPM = (function () {
   function makeProjectFolders(projects, baseNode) {
     chrome.bookmarks.getChildren(baseNode.id, function (projectNodes) {
       $.each(projects, function(j, project) {
-        var found = false;
-        $.each(projectNodes, function(k, projectNode) {
-          if (projectNode.title === project.name) {
-            found = true;
-            makeProjectBookmarks(project, projectNode);
-            return false;
-          }
-        });
-        if (!found) {
+        if (!projectNodes.findObject(function(projectNode){ return projectNode.title === project.name;})) {
           chrome.bookmarks.create({'parentId': baseNode.id, 'title': project.name}, function(newProjectNode) {
             console.log("Added new folder for "+project.name);
             makeProjectBookmarks(project, newProjectNode);
@@ -98,10 +102,9 @@ var TPM = (function () {
   }
 
   my.makeAllBookmarks = function (projects) {
-    var bookmarkBarId = '1'
-    chrome.bookmarks.getChildren(bookmarkBarId, function (results) {
+    chrome.bookmarks.getChildren(bookmarkBarId, function (nodes) {
       var found = false;
-      $.each(results, function(i, node) {
+      $.each(nodes, function(i, node) {
         if (node.title === baseBookMarkName) {
           makeProjectFolders(projects, node);
           found = true;
@@ -114,6 +117,33 @@ var TPM = (function () {
           makeProjectFolders(projects, newFolder);
         });
       }
+    });
+  };
+
+  my.lookupProjectContent = function(projectName, callback) {
+    my.scanTabsForProjects(function(projects) {
+      chrome.bookmarks.getChildren(bookmarkBarId, function (nodes) {
+        var baseNode = nodes.findObject(function(n) { return n.title === baseBookMarkName; });
+        var project = projects.findObject(function(p) { return p.name === projectName; });
+        if (project && baseNode) {
+          chrome.bookmarks.getChildren(baseNode.id, function (nodes) {
+            var projectNode = nodes.findObject(function(n) { return n.title === projectName; });
+            chrome.bookmarks.getChildren(projectNode.id, function (nodes) {
+              project.tabDescs.forEach(function(tabDesc) {
+                tabDesc.bookmarked = nodes.findObject(function(n) { return n.url === tabDesc.url; }) !== null;
+                tabDesc.active = true;
+              });
+              nodes.forEach(function(node) {
+                if (!project.tabDescs.findObject(function(td) { return td.url === node.url; })) {
+                  var newTabDesc = { title: node.title, url: node.url, favIconUrl: node.favIconUrl, bookmarked: true, active: false };
+                  project.tabDescs.push(newTabDesc);
+                }
+              });
+              callback(project);
+            });
+          });
+        }
+      });
     });
   };
 
