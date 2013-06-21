@@ -70,12 +70,15 @@ var TPM = (function () {
   };
 
   function makeProjectBookmarks(project, projectNode) {
+    console.log("Checking bookmarks for project page "+project.name);
     chrome.bookmarks.getChildren(projectNode.id, function (entries) {
-      var projectUrl = getProjectPageUrl(project.name);
+      var projectUrl = my.getProjectPageUrl(project.name);
       if (!entries.findObject(function(entry) { return entry.url === projectUrl; })) {
         chrome.bookmarks.create({'parentId': projectNode.id, 'title': project.name, url: projectUrl}, function(newProjectNode) {
           console.log("Added new bookmark for project page "+project.name);
         });
+      } else {
+        console.log("Already have bookmark for project page "+project.name);
       }
       $.each(project.tabDescs, function(j, tabDesc) {
         var found = entries.findObject(function(entry) { return entry.url === tabDesc.url });
@@ -91,11 +94,15 @@ var TPM = (function () {
   function makeProjectFolders(projects, baseNode) {
     chrome.bookmarks.getChildren(baseNode.id, function (projectNodes) {
       $.each(projects, function(j, project) {
-        if (!projectNodes.findObject(function(projectNode){ return projectNode.title === project.name;})) {
+        var projectNode = projectNodes.findObject(function(projectNode){ return projectNode.title === project.name;});
+        if (!projectNode) {
           chrome.bookmarks.create({'parentId': baseNode.id, 'title': project.name}, function(newProjectNode) {
             console.log("Added new folder for "+project.name);
-            makeProjectBookmarks(project, newProjectNode);
+            projectNode = newProjectNode;
           });
+        }
+        if (projectNode) {
+          makeProjectBookmarks(project, projectNode);
         }
       });
     });
@@ -103,15 +110,10 @@ var TPM = (function () {
 
   my.makeAllBookmarks = function (projects) {
     chrome.bookmarks.getChildren(bookmarkBarId, function (nodes) {
-      var found = false;
-      $.each(nodes, function(i, node) {
-        if (node.title === baseBookMarkName) {
-          makeProjectFolders(projects, node);
-          found = true;
-          return false;
-        }
-      });
-      if (!found) {
+      var baseFolder = nodes.findObject(function(n){ return n.title === baseBookMarkName; });
+      if (baseFolder) {
+        makeProjectFolders(projects, baseFolder);
+      } else {
         console.log("Adding base folder!");
         chrome.bookmarks.create({'parentId': bookmarkBar.id, 'title': baseBookMarkName}, function(newFolder) {
           makeProjectFolders(projects, newFolder);
