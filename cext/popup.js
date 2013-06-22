@@ -7,9 +7,11 @@ var Popup = (function (TPM) {
     return (!str || /^\s*$/.test(str));
   }
 
+  var initProjectNamePrompt = "Enter new project name here!";
+
   my.addNewProject = function () {
-    var name = $('#newProjectName').val();
-    if (isBlank(name)) {
+    var name = $.trim($('#newProjectName').val());
+    if (name === initProjectNamePrompt || name === "") {
       alert("You must enter a Project Name first!");
       return;
     }
@@ -18,8 +20,12 @@ var Popup = (function (TPM) {
   };
 
   my.init = function () {
-    // TODO enable button on name !blank
-    $('#newProjectButton').click( function() {
+    $("#newProjectName").val(initProjectNamePrompt).on('keyup input', function() {
+      name = $.trim($(this).val());
+      $("#newProjectButton").prop("disabled", name === initProjectNamePrompt || name === "");
+    });
+
+    $('#newProjectButton').prop("disabled", "true").click( function() {
       my.addNewProject();
     });
 
