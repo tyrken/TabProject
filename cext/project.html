@@ -2,35 +2,20 @@
 <html>
   <head>
     <title>TabProject Page</title>
-    <style>
-      body {
-        min-width: 357px;
-        overflow-x: hidden;
-      }
-
-      img {
-        margin: 5px;
-        border: 2px solid black;
-        vertical-align: middle;
-        width: 75px;
-        height: 75px;
-      }
-    </style>
-
-    <!--
-      - JavaScript and HTML must be in separate files: see our Content Security
-      - Policy documentation[1] for details and explanation.
-      -
-      - [1]: http://developer.chrome.com/extensions/contentSecurityPolicy.html
-     -->
     <script src="jquery-2.0.2.min.js"></script>
     <script src="tabproject.js"></script>
     <script src="project.js"></script>
   </head>
   <body>
 	  <h1>Tab Project: <span id='projectName'></span></h1>
+    <form id="actions">
+      <input type="button" id="openFavs" value="Open Active"/>
+      <input type="button" id="openAll" value="Open All"/>
+      <input type="button" id="close" value="Close Project"/>
+      <input type="button" id="archive" value="Archive Project"/>
+      <input type="checkbox" id="autosave">Auto Save tabs to project</input>
+    </form>
+    <hr/>
     <ul id='projectContent'></ul>
   </body>
 </html>
-
-

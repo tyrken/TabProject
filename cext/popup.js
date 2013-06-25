@@ -29,22 +29,21 @@ var Popup = (function (TPM) {
       my.addNewProject();
     });
 
-    TPM.scanTabsForProjects(function(projects) {
+    TPM.listProjects(function(projects) {
       var items = ['<ul>'];
-      $.each(projects, function(i, project) {
-        items.push('<li>'+project.name+'</li><ul>');
-        $.each(project.tabDescs, function(j, tabDesc) {
-          items.push('<li>'+tabDesc.title+'</li>');
-        });
-        items.push('</ul>');
-      });  // close each()
+      projects.forEach(function(project) {
+        items.push('<li class="clickable">'+project.name+'</li>');
+      });
       if (projects.length === 0) {
         items.push('<li>No Projects defined yet!</li>');
       }
       items.push('</ul>');
       $('#projectList').append( items.join('') );
-
-      TPM.makeAllBookmarks(projects);
+      $('li.clickable').on('click', function() {
+        var name = $(this).text();
+        var projectPageUrl = TPM.getProjectPageUrl(name);
+        chrome.tabs.create({url:projectPageUrl});
+      });
     });
   };
 

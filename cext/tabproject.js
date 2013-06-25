@@ -49,7 +49,7 @@ var TPM = (function () {
     chrome.tabs.query({}, function (tabs) {
       var projects = [];
       var curProject = null;
-      $.each(tabs, function(i, tab) {
+      tabs.forEach(function(tab) {
         console.log('TAB i=' + i + ', index=' + tab.index + ', title=' + tab.title);
         if (tab.index === 0) {
           curProject = null;
@@ -69,21 +69,49 @@ var TPM = (function () {
     });
   };
 
-  function makeProjectBookmarks(project, projectNode) {
-    console.log("Checking bookmarks for project page "+project.name);
-    chrome.bookmarks.getChildren(projectNode.id, function (entries) {
+  my.listProjects = function (callback) {
+    chrome.bookmarks.getChildren(bookmarkBarId, function (nodes) {
+      var baseNode = nodes.findObject(function(n) { return n.title === baseBookMarkName; });
+      if (baseNode !== null) {
+        console.log('baseNode', baseNode);
+        chrome.bookmarks.getChildren(baseNode.id, function (projectParentNodes) {
+          console.log('projectParentNodes', projectParentNodes);
+          var projects = [];
+          projectParentNodes.forEach(function(projectParentNode) {
+            var project = {};
+            project.folderBookmarkId = projectParentNode.id;
+            chrome.bookmarks.getChildren(projectParentNode.id, function (nodes) {
+              var projectBookmark = nodes.findObject(function(n) { return startsWith(n.url, my.ProjectPageBase); });
+              console.log('projectBookmarklp', projectBookmark);
+              if (projectBookmark !== null) {
+                project.projectBookmarkId = projectBookmark.id;
+                project.name = getParameterByName(projectBookmark.url, 'name');
+                projects.push(project);
+              }
+            });
+          });
+          console.log('Finished listProjects', projects);
+          callback(projects);
+        });
+      }
+    });
+  };
+
+  function makeProjectBookmarks(project, projectParentNodeId) {
+    console.log("Checking bookmarks for project "+project.name);
+    chrome.bookmarks.getChildren(projectParentNodeId, function (entries) {
       var projectUrl = my.getProjectPageUrl(project.name);
       if (!entries.findObject(function(entry) { return entry.url === projectUrl; })) {
-        chrome.bookmarks.create({'parentId': projectNode.id, 'title': project.name, url: projectUrl}, function(newProjectNode) {
-          console.log("Added new bookmark for project page "+project.name);
+        chrome.bookmarks.create({'parentId': projectParentNodeId, 'title': project.name, url: projectUrl}, function(newProjectNode) {
+          console.log("Added new bookmark for project "+project.name);
         });
       } else {
-        console.log("Already have bookmark for project page "+project.name);
+        console.log("Already have bookmark for project "+project.name);
       }
-      $.each(project.tabDescs, function(j, tabDesc) {
+      project.tabDescs.forEach(function(tabDesc) {
         var found = entries.findObject(function(entry) { return entry.url === tabDesc.url });
         if (!found) {
-          chrome.bookmarks.create({'parentId': projectNode.id, 'title': tabDesc.title, url: tabDesc.url}, function(newProjectNode) {
+          chrome.bookmarks.create({'parentId': projectParentNodeId, 'title': tabDesc.title, url: tabDesc.url}, function(newProjectNode) {
             console.log("Added new bookmark for "+tabDesc.title);
           });
         }
@@ -92,17 +120,16 @@ var TPM = (function () {
   }
 
   function makeProjectFolders(projects, baseNode) {
-    chrome.bookmarks.getChildren(baseNode.id, function (projectNodes) {
-      $.each(projects, function(j, project) {
-        var projectNode = projectNodes.findObject(function(projectNode){ return projectNode.title === project.name;});
-        if (!projectNode) {
-          chrome.bookmarks.create({'parentId': baseNode.id, 'title': project.name}, function(newProjectNode) {
+    chrome.bookmarks.getChildren(baseNode.id, function (projectParentNodes) {
+      projects.forEach(function(project) {
+        var projectParentNode = projectParentNodes.findObject(function(p){ return p.title === project.name;});
+        if (projectParentNode != null) {
+          makeProjectBookmarks(project, projectParentNode.id);
+        } else {
+          chrome.bookmarks.create({'parentId': baseNode.id, 'title': project.name}, function(newProjectParentNode) {
             console.log("Added new folder for "+project.name);
-            projectNode = newProjectNode;
+            makeProjectBookmarks(project, projectParentNode.id);
           });
-        }
-        if (projectNode) {
-          makeProjectBookmarks(project, projectNode);
         }
       });
     });
@@ -130,6 +157,7 @@ var TPM = (function () {
         if (project && baseNode) {
           chrome.bookmarks.getChildren(baseNode.id, function (nodes) {
             var projectNode = nodes.findObject(function(n) { return n.title === projectName; });
+            project.folderBookmarkId = projectNode.id;
             chrome.bookmarks.getChildren(projectNode.id, function (nodes) {
               project.tabDescs.forEach(function(tabDesc) {
                 tabDesc.bookmarked = nodes.findObject(function(n) { return n.url === tabDesc.url; }) !== null;
@@ -137,7 +165,7 @@ var TPM = (function () {
               });
               nodes.forEach(function(node) {
                 if (!project.tabDescs.findObject(function(td) { return td.url === node.url; })) {
-                  var newTabDesc = { title: node.title, url: node.url, favIconUrl: node.favIconUrl, bookmarked: true, active: false };
+                  var newTabDesc = { title: node.title, url: node.url, favIconUrl: node.favIconUrl, bookmarkId: node.id, parentBookmarkId: node.parentId, bookmarked: true, active: false };
                   project.tabDescs.push(newTabDesc);
                 }
               });
