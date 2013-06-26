@@ -1,4 +1,12 @@
-"use strict";
+define( 
+    [ "jquery" ],
+    function( $ ) {
+ 
+        return { // This will be available in callback of whoever requires this module
+            message: "Hello World!"
+        };
+    }
+);
 
 function getParameterByName(url, name) {
   var match = new RegExp('[?&#]' + name + '=([^&]*)').exec(url);
@@ -6,16 +14,22 @@ function getParameterByName(url, name) {
 }
 
 function setHashParameterByName(url, name, value) {
+  console.log('shpbn', url);
+  console.log('shpbn-value', value);
+
   if (value === null) {
-    return url.replace('([&#])' + name + '=[^&]*&?', '$1').replace('[&#]$', '');
+    url = url.replace('([&#])' + name + '=[^&]*&?', '$1').replace('[&#]$', '');
+  } else {
+    var newHashParam = name+'='+encodeURIComponent(value);
+    var re = new RegExp('([&#])' + name + '=[^&]*');
+    var match = re.exec(url);
+    if (match) {
+      url = url.splice(match.index, re.lastIndex-match.index, match[1]+newHashParam);
+    } else {
+      url = url+(url.indexOf('#') > 0 ? '&' : '#')+newHashParam;
+    }
   }
-  var newHashParam = name+'='+encodeURIComponent(value);
-  var re = new RegExp('([&#])' + name + '=[^&]*');
-  var match = re.exec(url);
-  if (match) {
-    return url.splice(match.index, re.lastIndex-match.index, match[1]+newHashParam);
-  }
-  return url+(url.indexOf('#') > 0 ? '&' : '#')+newHashParam;
+  console.log('shpbn-final', url);
 }
 
 if (!Array.prototype.findObject) {
@@ -29,7 +43,7 @@ if (!Array.prototype.findObject) {
   };
 }
 
-var TPM = (function () {
+var TPM = (function (chrome, console) {
   var my = {};
 
   function startsWith(input, prefix) {
@@ -44,7 +58,7 @@ var TPM = (function () {
     return chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE;
   };
 
-  var bookmarkBarId = '1'
+  var bookmarkBarId = '1';
   var baseBookMarkName = "TabProject";
 
   my.ProjectPageBase = 'chrome-extension://' + chrome.i18n.getMessage("@@extension_id") + '/project.html?name=';
@@ -113,7 +127,7 @@ var TPM = (function () {
       }
     });
   };
-  
+
   my.listDBProjects = function (callback) {
     var projects = [];
     my.enumerateProjectsFromDB(function (project, remaining) {
@@ -163,7 +177,7 @@ var TPM = (function () {
         console.log("Already have bookmark for project "+project.name);
       }
       project.tabDescs.forEach(function(tabDesc) {
-        var found = entries.findObject(function(entry) { return entry.url === tabDesc.url });
+        var found = entries.findObject(function(entry) { return entry.url === tabDesc.url; });
         if (!found) {
           chrome.bookmarks.create({'parentId': projectParentNodeId, 'title': tabDesc.title, url: tabDesc.url}, function(newProjectNode) {
             console.log("Added new bookmark for "+tabDesc.title);
@@ -177,7 +191,7 @@ var TPM = (function () {
     chrome.bookmarks.getChildren(baseNode.id, function (projectParentNodes) {
       projects.forEach(function(project) {
         var projectParentNode = projectParentNodes.findObject(function(p){ return p.title === project.name;});
-        if (projectParentNode != null) {
+        if (projectParentNode !== null) {
           makeProjectBookmarks(project, projectParentNode.id);
         } else {
           chrome.bookmarks.create({'parentId': baseNode.id, 'title': project.name}, function(newProjectParentNode) {
@@ -196,7 +210,7 @@ var TPM = (function () {
         makeProjectFolders(projects, baseFolder);
       } else {
         console.log("Adding base folder!");
-        chrome.bookmarks.create({'parentId': bookmarkBar.id, 'title': baseBookMarkName}, function(newFolder) {
+        chrome.bookmarks.create({'parentId': bookmarkBarId, 'title': baseBookMarkName}, function(newFolder) {
           makeProjectFolders(projects, newFolder);
         });
       }
@@ -232,7 +246,7 @@ var TPM = (function () {
   };
 
   return my;
-}());
+}(chrome, console));
 
 
 

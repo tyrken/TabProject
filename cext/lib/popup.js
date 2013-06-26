@@ -21,7 +21,7 @@ var Popup = (function (TPM) {
 
   my.init = function () {
     $("#newProjectName").val(initProjectNamePrompt).on('keyup input', function() {
-      name = $.trim($(this).val());
+      var name = $.trim($(this).val());
       $("#newProjectButton").prop("disabled", name === initProjectNamePrompt || name === "");
     });
 

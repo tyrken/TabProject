@@ -28,7 +28,7 @@ var ProjectPage = (function (TPM) {
       $('#projectContent').append( items.join('') );
 
       updateGUI(project);
-	  });
+    });
 
     $('input:checkbox').on('click', function(event) {
       var param = $(this).attr('id') === 'autosave' ? 'as' : 'ao';
