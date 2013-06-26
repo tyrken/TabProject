@@ -29,7 +29,7 @@ var Popup = (function (TPM) {
       my.addNewProject();
     });
 
-    TPM.listProjects(function(projects) {
+    TPM.listDBProjects(function(projects) {
       var items = ['<ul>'];
       projects.forEach(function(project) {
         items.push('<li class="clickable">'+project.name+'</li>');

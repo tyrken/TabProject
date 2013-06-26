@@ -8,14 +8,17 @@
   </head>
   <body>
 	  <h1>Tab Project: <span id='projectName'></span></h1>
-    <form id="actions">
-      <input type="button" id="openFavs" value="Open Active"/>
+      <form id="actions">
       <input type="button" id="openAll" value="Open All"/>
       <input type="button" id="close" value="Close Project"/>
-      <input type="button" id="archive" value="Archive Project"/>
-      <input type="checkbox" id="autosave">Auto Save tabs to project</input>
     </form>
     <hr/>
     <ul id='projectContent'></ul>
+    <hr/>
+    <form id="options">
+      <input type="button" id="archive" value="Archive Project"/>
+      <input type="checkbox" id="autosave">Auto Save tabs to Project</input>
+      <input type="checkbox" id="autoload">Auto Load this Project at startup</input>
+    </form>
   </body>
 </html>

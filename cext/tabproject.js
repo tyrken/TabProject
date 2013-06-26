@@ -1,8 +1,21 @@
 "use strict";
 
 function getParameterByName(url, name) {
-  var match = new RegExp('[?&]' + name + '=([^&]*)').exec(url);
+  var match = new RegExp('[?&#]' + name + '=([^&]*)').exec(url);
   return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
+}
+
+function setHashParameterByName(url, name, value) {
+  if (value === null) {
+    return url.replace('([&#])' + name + '=[^&]*&?', '$1').replace('[&#]$', '');
+  }
+  var newHashParam = name+'='+encodeURIComponent(value);
+  var re = new RegExp('([&#])' + name + '=[^&]*');
+  var match = re.exec(url);
+  if (match) {
+    return url.splice(match.index, re.lastIndex-match.index, match[1]+newHashParam);
+  }
+  return url+(url.indexOf('#') > 0 ? '&' : '#')+newHashParam;
 }
 
 if (!Array.prototype.findObject) {
@@ -50,7 +63,7 @@ var TPM = (function () {
       var projects = [];
       var curProject = null;
       tabs.forEach(function(tab) {
-        console.log('TAB i=' + i + ', index=' + tab.index + ', title=' + tab.title);
+        console.log('TAB index=' + tab.index + ', title=' + tab.title);
         if (tab.index === 0) {
           curProject = null;
         }
@@ -69,29 +82,70 @@ var TPM = (function () {
     });
   };
 
-  my.listProjects = function (callback) {
+  my.enumerateProjectsFromDB = function (callback) {
     chrome.bookmarks.getChildren(bookmarkBarId, function (nodes) {
       var baseNode = nodes.findObject(function(n) { return n.title === baseBookMarkName; });
       if (baseNode !== null) {
-        console.log('baseNode', baseNode);
         chrome.bookmarks.getChildren(baseNode.id, function (projectParentNodes) {
-          console.log('projectParentNodes', projectParentNodes);
-          var projects = [];
+          var counter = projectParentNodes.length;
           projectParentNodes.forEach(function(projectParentNode) {
             var project = {};
             project.folderBookmarkId = projectParentNode.id;
+            project.name = projectParentNode.title;
             chrome.bookmarks.getChildren(projectParentNode.id, function (nodes) {
-              var projectBookmark = nodes.findObject(function(n) { return startsWith(n.url, my.ProjectPageBase); });
-              console.log('projectBookmarklp', projectBookmark);
-              if (projectBookmark !== null) {
-                project.projectBookmarkId = projectBookmark.id;
-                project.name = getParameterByName(projectBookmark.url, 'name');
-                projects.push(project);
+              for (var i = 0, j = nodes.length; i < j; ++i) {
+                var n = nodes[i];
+                if (startsWith(n.url, my.ProjectPageBase)) {
+                  project.bookmarkId = n.id;
+                  project.url = n.url;
+                  project.name = getParameterByName(n.url, 'name');
+                  project.autosave = getParameterByName(n.url, 'as');
+                  project.autoopen = getParameterByName(n.url, 'ao');
+                  nodes.splice(i, 1);
+                  break;
+                }
               }
+              project.storedBookmarks = nodes;
+              return callback(project, --counter);
             });
           });
-          console.log('Finished listProjects', projects);
-          callback(projects);
+        });
+      }
+    });
+  };
+  
+  my.listDBProjects = function (callback) {
+    var projects = [];
+    my.enumerateProjectsFromDB(function (project, remaining) {
+      projects.push(project);
+      if (remaining <= 0) {
+        callback(projects);
+      }
+    });
+  };
+
+  my.getProjectFromDB = function (name, callback) {
+    var found = false;
+    my.enumerateProjectsFromDB(function (project, remaining) {
+      if (project.name === name) {
+        callback(project);
+        found = true;
+        return false;
+      } else if (remaining <= 0 && !found) {
+        callback(null);
+      }
+    });
+  };
+
+  my.updateProjectHashParamInDB = function (name, param, value, callback) {
+    my.getProjectFromDB(name, function (project) {
+      if (project === null) {
+        alert('No project named "'+name+'"!');
+        callback(null);
+      } else {
+        project.url = setHashParameterByName(project.url, param, value);
+        chrome.bookmarks.update(project.bookmarkId, {'url': project.url}, function() {
+          callback(project);
         });
       }
     });
