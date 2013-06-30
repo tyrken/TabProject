@@ -10,8 +10,12 @@
     <script src="lib/jquery-2.0.2.min.js"></script>
     <script src="lib/tabproject.js"></script>
     <script src="lib/popup.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+    <script src="lib/bootstrap.min.js"></script>
   </head>
   <body>
+    <script src="./js/require.js" data-main="./js/popup"></script>
     <form>
       <input type='text' id='newProjectName' width='50'/>
       <input type='submit' id='newProjectButton' value='Create Project'></input>

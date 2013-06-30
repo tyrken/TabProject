@@ -1,6 +1,15 @@
-"use strict";
+requirejs.config({
+  shim: {
+    /* Set bootstrap dependencies (just jQuery) */
+    'bootstrap' : ['jquery']
+  }
+});
 
-var ProjectPage = (function (TPM) {
+require(['jquery', 'bootstrap', 'tabproject'], function($, bootstrap, TPM) {
+  "use strict";
+
+  console.log("Loaded popup via require:)");
+
   var my = {};
 
   function updateGUI(project) {
@@ -39,10 +48,8 @@ var ProjectPage = (function (TPM) {
     });
   };
 
+  $(my.init);
+
   return my;
 }(TPM));
-
-document.addEventListener('DOMContentLoaded', function () {
-  ProjectPage.init();
-});
 
