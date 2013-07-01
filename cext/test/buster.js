@@ -4,9 +4,9 @@ config["My tests"] = {
     rootPath: "../",
     environment: "browser", // or "node"
     sources: [
-        "lib/*.js",
+        "js/*.js"
     ],
     tests: [
         "test/*-test.js"
     ]
-}
+};
