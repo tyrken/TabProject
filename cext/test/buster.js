@@ -1,16 +1,12 @@
 var config = module.exports;
 
 config["My tests"] = {
-	//autoRun: false,
+	autoRun: true,
     rootPath: "../",
-    libs: [ 'require.config','lib/require.js' ],
-    environment: "browser", // or "node"
-    sources: [
-        //"js/*.js"
-    ],
-    resources: ["js/*.js"],
-    tests: [
-        "test/*-test.js"
-    ]
-    //extensions: [require("buster-amd")]
+    libs: [ 'lib/require.js', 'requirejs-config.js' ],
+    environment: "browser",
+    sources: ["js/*.js"],
+    resources: ["lib/*.js"],
+    tests: ["test/*-test.js"],
+    extensions: [require("buster-amd")]
 };

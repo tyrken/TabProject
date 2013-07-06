@@ -1,10 +1,10 @@
 requirejs.config({
-  appDir: ".",
-  baseUrl: "js",
+  //appDir: ".",
+  //baseUrl: "",
   paths: {
     'jquery': ['lib/jquery'],
     'bootstrap': ['lib/bootstrap'],
-    'tabproject': ['lib/tabproject']
+    'tabproject': ['js/tabproject']
     },
   shim: {
     /* Set bootstrap dependencies (just jQuery) */
