@@ -4,9 +4,8 @@ require.config({
   baseUrl: "..",
   paths: {
         jquery: 'lib/jquery',
-        'jasmine': 'lib/jasmine/lib/jasmine',
-        'jasmine-html': 'lib/jasmine/lib/jasmine-html',
-        spec: 'lib/jasmine/spec/'
+        jasmine: 'lib/jasmine-1.3.1/jasmine',
+        'jasmine-html': 'lib/jasmine-1.3.1/jasmine-html'
     },
     shim: {
         jasmine: {
@@ -34,10 +33,7 @@ require(['jquery', 'jasmine-html'], function ($, jasmine) {
     };
 
     var specs = [];
-
-    specs.push('lib/jasmine/spec/notepadSpec');
-
-
+    specs.push('test/utils-tests');
 
     $(function () {
         require(specs, function (spec) {

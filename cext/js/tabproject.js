@@ -3,30 +3,6 @@ define(
   function( $ ) {
     "use strict";
 
-    function getParameterByName(url, name) {
-      var match = new RegExp('[?&#]' + name + '=([^&]*)').exec(url);
-      return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
-    }
-
-    function setHashParameterByName(url, name, value) {
-      console.log('shpbn', url);
-      console.log('shpbn-value', value);
-
-      if (value === null) {
-        url = url.replace('([&#])' + name + '=[^&]*&?', '$1').replace('[&#]$', '');
-      } else {
-        var newHashParam = name+'='+encodeURIComponent(value);
-        var re = new RegExp('([&#])' + name + '=[^&]*');
-        var match = re.exec(url);
-        if (match) {
-          url = url.splice(match.index, re.lastIndex-match.index, match[1]+newHashParam);
-        } else {
-          url = url+(url.indexOf('#') > 0 ? '&' : '#')+newHashParam;
-        }
-      }
-      console.log('shpbn-final', url);
-    }
-
     if (!Array.prototype.findObject) {
       Array.prototype.findObject = function (predicate) {
         for (var i = 0, j = this.length; i < j; ++i) {
@@ -36,10 +12,6 @@ define(
         }
         return null;
       };
-    }
-
-    function startsWith(input, prefix) {
-      return input.slice(0, prefix.length) === prefix;
     }
 
     var bookmarkBarId = '1';
