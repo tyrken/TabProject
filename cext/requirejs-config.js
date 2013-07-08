@@ -7,7 +7,8 @@ requirejs.config({
     'tabproject': ['js/tabproject'],
     'jasmine': ['lib/jasmine-1.3.1/jasmine'],
     'jasmine-html': ['lib/jasmine-1.3.1/jasmine-html'],
-    'jasmine-gui': ['test/jasmine-gui']
+    'jasmine-gui': ['test/jasmine-gui'],
+    'utils': ['js/utils']
     },
   shim: {
     /* Set bootstrap dependencies (just jQuery) */

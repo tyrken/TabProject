@@ -1,4 +1,4 @@
-require(['jquery', 'bootstrap', 'tabproject'], function($, bootstrap, TPM) {
+require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, TPM, utils) {
   "use strict";
 
   console.log("Loaded popup via require:)");
@@ -14,7 +14,7 @@ require(['jquery', 'bootstrap', 'tabproject'], function($, bootstrap, TPM) {
   }
 
   my.init = function () {
-    var name = getParameterByName(window.location.search, 'name');
+    var name = utils.getParameterByName(window.location.search, 'name');
 
     TPM.lookupProjectContent(name, function(project) {
       var items = [];

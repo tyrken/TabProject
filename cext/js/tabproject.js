@@ -1,6 +1,6 @@
 define(
-  [ "jquery" ],
-  function( $ ) {
+  [ "jquery", "utils" ],
+  function( $, utils ) {
     "use strict";
 
     if (!Array.prototype.findObject) {
@@ -72,7 +72,7 @@ define(
     };
 
     my.isProjectPageUrl = function (url) {
-      return startsWith(url, TPM.ProjectPageBase);
+      return utils.startsWith(url, my.ProjectPageBase);
     };
 
     my.scanTabsForProjects = function (callback) {
@@ -86,7 +86,7 @@ define(
             curProject = null;
           }
           if (my.isProjectPageUrl(tab.url)) {
-            curProject = { name: getParameterByName(tab.url, 'name'), tabDescs: [] };
+            curProject = { name: utils.getParameterByName(tab.url, 'name'), tabDescs: [] };
             projects.push(curProject);
             console.log('FirstProjectTab', curProject);
           } else if (curProject !== null) {
@@ -113,12 +113,12 @@ define(
               chrome.bookmarks.getChildren(projectParentNode.id, function (nodes) {
                 for (var i = 0, j = nodes.length; i < j; ++i) {
                   var n = nodes[i];
-                  if (startsWith(n.url, my.ProjectPageBase)) {
+                  if (my.isProjectPageUrl(n.url)) {
                     project.bookmarkId = n.id;
                     project.url = n.url;
-                    project.name = getParameterByName(n.url, 'name');
-                    project.autosave = getParameterByName(n.url, 'as');
-                    project.autoopen = getParameterByName(n.url, 'ao');
+                    project.name = utils.getParameterByName(n.url, 'name');
+                    project.autosave = utils.getParameterByName(n.url, 'as');
+                    project.autoopen = utils.getParameterByName(n.url, 'ao');
                     nodes.splice(i, 1);
                     break;
                   }
@@ -161,7 +161,7 @@ define(
           alert('No project named "'+name+'"!');
           callback(null);
         } else {
-          project.url = setHashParameterByName(project.url, param, value);
+          project.url = utils.setHashParameterByName(project.url, param, value);
           chrome.bookmarks.update(project.bookmarkId, {'url': project.url}, function() {
             callback(project);
           });
