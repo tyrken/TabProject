@@ -5,7 +5,13 @@ require.config({
   paths: {
     jquery: 'lib/jquery',
     jasmine: 'lib/jasmine-1.3.1/jasmine',
-    'jasmine-html': 'lib/jasmine-1.3.1/jasmine-html'
+    'jasmine-html': 'lib/jasmine-1.3.1/jasmine-html',
+    'ichrome': ['test/ichrome'],
+    'bootstrap': ['lib/bootstrap'],
+    'tabproject': ['js/tabproject'],
+    'utils': ['js/utils'],
+    'popup': ['js/popup'],
+    'project': ['js/project'],
   },
   shim: {
     jasmine: {
@@ -34,6 +40,7 @@ require(['jquery', 'jasmine-html'], function($, jasmine) {
 
   var specs = [];
   specs.push('test/utils-tests');
+  specs.push('test/tabproject-tests');
 
   $(function() {
     require(specs, function(spec) {

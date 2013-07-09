@@ -8,7 +8,8 @@ requirejs.config({
     'jasmine': ['lib/jasmine-1.3.1/jasmine'],
     'jasmine-html': ['lib/jasmine-1.3.1/jasmine-html'],
     'jasmine-gui': ['test/jasmine-gui'],
-    'utils': ['js/utils']
+    'utils': ['js/utils'],
+    'ichrome': ['js/ichrome']
     },
   shim: {
     /* Set bootstrap dependencies (just jQuery) */

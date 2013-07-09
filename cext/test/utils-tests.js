@@ -1,12 +1,14 @@
-define(["js/utils"], function(utils) {
+define(["utils"], function(utils) {
   describe("utils-tests", function() {
 
     it("getParameterByName works", function() {
-      var url = "http://mystuff?R=e&XX=r%20f&YY=";
+      var url = "http://mystuff?R=e&XX=r%20f&YY=#f=3&i=5";
       expect(utils.getParameterByName(url, 'R')).toEqual('e');
       expect(utils.getParameterByName(url, 'XX')).toEqual('r f');
       expect(utils.getParameterByName(url, 'YY')).toEqual('');
       expect(utils.getParameterByName(url, 'ZZZ')).toEqual(null);
+      expect(utils.getParameterByName(url, 'f')).toEqual('3');
+      expect(utils.getParameterByName(url, 'i')).toEqual('5');
     });
 
     it("startsWith works", function() {

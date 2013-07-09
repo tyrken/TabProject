@@ -1,5 +1,5 @@
 define(
-["jquery", "utils"], function($, utils) {
+["jquery", "utils", "ichrome"], function($, utils, ichrome) {
   "use strict";
 
   var bookmarkBarId = '1';
@@ -7,12 +7,12 @@ define(
 
   function makeProjectBookmarks(project, projectParentNodeId) {
     console.log("Checking bookmarks for project " + project.name);
-    chrome.bookmarks.getChildren(projectParentNodeId, function(entries) {
+    ichrome.bookmarks.getChildren(projectParentNodeId, function(entries) {
       var projectUrl = my.getProjectPageUrl(project.name);
       if (!entries.findObject(function(entry) {
         return entry.url === projectUrl;
       })) {
-        chrome.bookmarks.create({
+        ichrome.bookmarks.create({
           'parentId': projectParentNodeId,
           'title': project.name,
           url: projectUrl
@@ -27,7 +27,7 @@ define(
           return entry.url === tabDesc.url;
         });
         if (!found) {
-          chrome.bookmarks.create({
+          ichrome.bookmarks.create({
             'parentId': projectParentNodeId,
             'title': tabDesc.title,
             url: tabDesc.url
@@ -40,7 +40,7 @@ define(
   }
 
   function makeProjectFolders(projects, baseNode) {
-    chrome.bookmarks.getChildren(baseNode.id, function(projectParentNodes) {
+    ichrome.bookmarks.getChildren(baseNode.id, function(projectParentNodes) {
       projects.forEach(function(project) {
         var projectParentNode = projectParentNodes.findObject(function(p) {
           return p.title === project.name;
@@ -48,7 +48,7 @@ define(
         if (projectParentNode !== null) {
           makeProjectBookmarks(project, projectParentNode.id);
         } else {
-          chrome.bookmarks.create({
+          ichrome.bookmarks.create({
             'parentId': baseNode.id,
             'title': project.name
           }, function(newProjectParentNode) {
@@ -63,14 +63,14 @@ define(
   var my = {};
 
   my.getMWOPH = function() {
-    return chrome.bookmarks.MAX_WRITE_OPERATIONS_PER_HOUR;
+    return ichrome.bookmarks.MAX_WRITE_OPERATIONS_PER_HOUR;
   };
 
   my.getMSWOPM = function() {
-    return chrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE;
+    return ichrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE;
   };
 
-  my.ProjectPageBase = 'chrome-extension://' + chrome.i18n.getMessage("@@extension_id") + '/project.html?name=';
+  my.ProjectPageBase = 'chrome-extension://' + ichrome.i18n.getMessage("@@extension_id") + '/project.html?name=';
 
   my.getProjectPageUrl = function(name) {
     return my.ProjectPageBase + encodeURIComponent(name);
@@ -82,7 +82,7 @@ define(
 
   my.scanTabsForProjects = function(callback) {
     console.log('Starting scanTabs');
-    chrome.tabs.query({}, function(tabs) {
+    ichrome.tabs.query({}, function(tabs) {
       var projects = [];
       var curProject = null;
       tabs.forEach(function(tab) {
@@ -113,26 +113,26 @@ define(
   };
 
   my.enumerateProjectsFromDB = function(callback) {
-    chrome.bookmarks.getChildren(bookmarkBarId, function(nodes) {
+    ichrome.bookmarks.getChildren(bookmarkBarId, function(nodes) {
       var baseNode = nodes.findObject(function(n) {
         return n.title === baseBookMarkName;
       });
       if (baseNode !== null) {
-        chrome.bookmarks.getChildren(baseNode.id, function(projectParentNodes) {
+        ichrome.bookmarks.getChildren(baseNode.id, function(projectParentNodes) {
           var counter = projectParentNodes.length;
           projectParentNodes.forEach(function(projectParentNode) {
             var project = {};
             project.folderBookmarkId = projectParentNode.id;
             project.name = projectParentNode.title;
-            chrome.bookmarks.getChildren(projectParentNode.id, function(nodes) {
+            ichrome.bookmarks.getChildren(projectParentNode.id, function(nodes) {
               for (var i = 0, j = nodes.length; i < j; ++i) {
                 var n = nodes[i];
                 if (my.isProjectPageUrl(n.url)) {
                   project.bookmarkId = n.id;
                   project.url = n.url;
                   project.name = utils.getParameterByName(n.url, 'name');
-                  project.autosave = utils.getParameterByName(n.url, 'as');
-                  project.autoopen = utils.getParameterByName(n.url, 'ao');
+                  project.autosave = !!utils.getParameterByName(n.url, 'as');
+                  project.autoopen = !!utils.getParameterByName(n.url, 'ao');
                   nodes.splice(i, 1);
                   break;
                 }
@@ -176,7 +176,7 @@ define(
         callback(null);
       } else {
         project.url = utils.setHashParameterByName(project.url, param, value);
-        chrome.bookmarks.update(project.bookmarkId, {
+        ichrome.bookmarks.update(project.bookmarkId, {
           'url': project.url
         }, function() {
           callback(project);
@@ -186,7 +186,7 @@ define(
   };
 
   my.makeAllBookmarks = function(projects) {
-    chrome.bookmarks.getChildren(bookmarkBarId, function(nodes) {
+    ichrome.bookmarks.getChildren(bookmarkBarId, function(nodes) {
       var baseFolder = nodes.findObject(function(n) {
         return n.title === baseBookMarkName;
       });
@@ -194,7 +194,7 @@ define(
         makeProjectFolders(projects, baseFolder);
       } else {
         console.log("Adding base folder!");
-        chrome.bookmarks.create({
+        ichrome.bookmarks.create({
           'parentId': bookmarkBarId,
           'title': baseBookMarkName
         }, function(newFolder) {
@@ -206,7 +206,7 @@ define(
 
   my.lookupProjectContent = function(projectName, callback) {
     my.scanTabsForProjects(function(projects) {
-      chrome.bookmarks.getChildren(bookmarkBarId, function(nodes) {
+      ichrome.bookmarks.getChildren(bookmarkBarId, function(nodes) {
         var baseNode = nodes.findObject(function(n) {
           return n.title === baseBookMarkName;
         });
@@ -214,12 +214,12 @@ define(
           return p.name === projectName;
         });
         if (project && baseNode) {
-          chrome.bookmarks.getChildren(baseNode.id, function(nodes) {
+          ichrome.bookmarks.getChildren(baseNode.id, function(nodes) {
             var projectNode = nodes.findObject(function(n) {
               return n.title === projectName;
             });
             project.folderBookmarkId = projectNode.id;
-            chrome.bookmarks.getChildren(projectNode.id, function(nodes) {
+            ichrome.bookmarks.getChildren(projectNode.id, function(nodes) {
               project.tabDescs.forEach(function(tabDesc) {
                 tabDesc.bookmarked = nodes.findObject(function(n) {
                   return n.url === tabDesc.url;

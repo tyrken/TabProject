@@ -3,7 +3,7 @@ define(["jquery"], function($) {
   var u = {
 
     getParameterByName: function(url, name) {
-      var match = new RegExp('[?&#]' + name + '=([^&]*)').exec(url);
+      var match = new RegExp('[?&#]' + name + '=([^&#]*)').exec(url);
       return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
     },
 
