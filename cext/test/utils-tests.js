@@ -19,7 +19,6 @@ define(["js/utils"], function(utils) {
     });
 
     it("setHashParameterByName works", function() {
-      var url = "http://mystuff?F=X#y=p%20e&q=123";
       expect(utils.setHashParameterByName("http://mystuff?F=X#y=p%20e&q=123", 'y', 'tt 5')).toEqual('http://mystuff?F=X#y=tt%205&q=123');
       expect(utils.setHashParameterByName("http://mystuff?F=X#x=1&y=p%20e&q=123", 'y', 'tt 5')).toEqual('http://mystuff?F=X#x=1&y=tt%205&q=123');
       expect(utils.setHashParameterByName("http://mystuff?F=X#x=1&y=p%20e", 'y', '4')).toEqual('http://mystuff?F=X#x=1&y=4');
@@ -27,6 +26,31 @@ define(["js/utils"], function(utils) {
       expect(utils.setHashParameterByName("http://mystuff#y=p", 'y', null)).toEqual('http://mystuff#');
       expect(utils.setHashParameterByName("http://mystuff#x=7&y=p", 'y', null)).toEqual('http://mystuff#x=7');
       expect(utils.setHashParameterByName("http://mystuff#y=p&t=2", 'y', null)).toEqual('http://mystuff#t=2');
+    });
+
+    it("isBlank works", function() {
+      expect(utils.isBlank('fds')).toBe(false);
+      expect(utils.isBlank('')).toBe(true);
+      expect(utils.isBlank(null)).toBe(true);
+    });
+
+    it("findObject works", function() {
+      var objs = ['s', 'd', 'v'];
+      expect(utils.findObject(objs, function(s) {
+        return s === 'fds';
+      })).toBe(null);
+      expect(utils.findObject(objs, function(s) {
+        return s === 's';
+      })).toEqual('s');
+    });
+
+    it("String/Array prototypes are extended", function() {
+      var objs = ['s', 'd', 'v'];
+      expect(objs.findObject(function(s) {
+        return s === 'v';
+      })).toEqual('v');
+      expect('fds'.isBlank()).toBe(false);
+      expect('myinput'.startsWith('my')).toBe(true);
     });
 
   });

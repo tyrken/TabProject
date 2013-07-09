@@ -10,16 +10,16 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, T
     $('#autoopen').prop('checked', project.autoopen === '1');
     document.title = project.name;
     $('#projectName').text(project.name);
-    window.history.replaceState({},project.name, project.url);
+    window.history.replaceState({}, project.name, project.url);
   }
 
-  my.init = function () {
+  my.init = function() {
     var name = utils.getParameterByName(window.location.search, 'name');
 
     TPM.lookupProjectContent(name, function(project) {
       var items = [];
       project.tabDescs.forEach(function(tabDesc) {
-        items.push('<li><a href="'+tabDesc.url+'">'+tabDesc.title+'</a>');
+        items.push('<li><a href="' + tabDesc.url + '">' + tabDesc.title + '</a>');
         if (tabDesc.bookmarked) items.push(' B ');
         if (tabDesc.active) items.push(' A ');
         items.push('</li>');
@@ -27,7 +27,7 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, T
       if (project.tabDescs.length === 0) {
         items.push('<li>No project content yet!</li>');
       }
-      $('#projectContent').append( items.join('') );
+      $('#projectContent').append(items.join(''));
 
       updateGUI(project);
     });
@@ -45,4 +45,3 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, T
 
   return my;
 }(TPM));
-

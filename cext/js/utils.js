@@ -1,17 +1,10 @@
 define(["jquery"], function($) {
 
-  return {
+  var u = {
 
     getParameterByName: function(url, name) {
       var match = new RegExp('[?&#]' + name + '=([^&]*)').exec(url);
       return match && decodeURIComponent(match[1].replace(/\+/g, ' '));
-    },
-
-    startsWith: function(input, prefix) {
-      if (input !== '' && !input) return false;
-      if (prefix === '') return true;
-      if (!prefix) return false;
-      return input.slice(0, prefix.length) === prefix;
     },
 
     setHashParameterByName: function(url, name, value) {
@@ -33,5 +26,42 @@ define(["jquery"], function($) {
       return url;
     },
 
+    isBlank: function(str) {
+      return (!str || /^\s*$/.test(str));
+    },
+
+    startsWith: function(input, prefix) {
+      if (input !== '' && !input) return false;
+      if (prefix === '') return true;
+      if (!prefix) return false;
+      return input.slice(0, prefix.length) === prefix;
+    },
+
+    findObject: function(array, predicate) {
+      for (var i = 0, j = array.length; i < j; ++i) {
+        if (predicate(array[i])) {
+          return array[i];
+        }
+      }
+      return null;
+    },
   };
+
+  if (!Array.prototype.findObject) {
+    Array.prototype.findObject = function(predicate) {
+      return u.findObject(this, predicate);
+    };
+  }
+  if (!String.prototype.isBlank) {
+    String.prototype.isBlank = function() {
+      return u.isBlank(this);
+    };
+  }
+  if (!String.prototype.startsWith) {
+    String.prototype.startsWith = function(prefix) {
+      return u.startsWith(this, prefix);
+    };
+  }
+
+  return u;
 });
