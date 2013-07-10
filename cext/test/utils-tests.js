@@ -51,6 +51,10 @@ define(["utils"], function(utils) {
       expect(objs.findObject(function(s) {
         return s === 'v';
       })).toEqual('v');
+      var objs2 = objs.clone();
+      objs2.push('x');
+      expect(objs.length).toBe(3);
+      expect(objs2.length).toBe(4);
       expect('fds'.isBlank()).toBe(false);
       expect('myinput'.startsWith('my')).toBe(true);
     });

@@ -6,8 +6,8 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, T
   var my = {};
 
   function updateGUI(project) {
-    $('#autosave').prop('checked', project.autosave === '1');
-    $('#autoopen').prop('checked', project.autoopen === '1');
+    $('#autosave').prop('checked', project.autosave);
+    $('#autoopen').prop('checked', project.autoopen);
     document.title = project.name;
     $('#projectName').text(project.name);
     window.history.replaceState({}, project.name, project.url);
@@ -34,7 +34,7 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, T
 
     $('input:checkbox').on('click', function(event) {
       var param = $(this).attr('id') === 'autosave' ? 'as' : 'ao';
-      var newValue = $(this).is(':checked') ? null : '1';
+      var newValue = $(this).is(':checked');
       TPM.updateProjectHashParamInDB(name, param, newValue, function(project) {
         updateGUI(project);
       });

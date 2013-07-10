@@ -39,8 +39,8 @@ define(
     });
   }
 
-  function makeProjectFolders(projects, baseNode) {
-    ichrome.bookmarks.getChildren(baseNode.id, function(projectParentNodes) {
+  function makeProjectFolders(projects, baseNodeId) {
+    ichrome.bookmarks.getChildren(baseNodeId, function(projectParentNodes) {
       projects.forEach(function(project) {
         var projectParentNode = projectParentNodes.findObject(function(p) {
           return p.title === project.name;
@@ -49,11 +49,11 @@ define(
           makeProjectBookmarks(project, projectParentNode.id);
         } else {
           ichrome.bookmarks.create({
-            'parentId': baseNode.id,
+            'parentId': baseNodeId,
             'title': project.name
           }, function(newProjectParentNode) {
             console.log("Added new folder for " + project.name);
-            makeProjectBookmarks(project, projectParentNode.id);
+            makeProjectBookmarks(project, newProjectParentNode.id);
           });
         }
       });
@@ -93,6 +93,9 @@ define(
         if (my.isProjectPageUrl(tab.url)) {
           curProject = {
             name: utils.getParameterByName(tab.url, 'name'),
+            url: tab.url,
+            autosave: !!utils.getParameterByName(tab.url, 'as'),
+            autoopen: !!utils.getParameterByName(tab.url, 'ao'),
             tabDescs: []
           };
           projects.push(curProject);
@@ -175,7 +178,7 @@ define(
         alert('No project named "' + name + '"!');
         callback(null);
       } else {
-        project.url = utils.setHashParameterByName(project.url, param, value);
+        project.url = utils.setHashParameterByName(project.url, param, value ? '1' : null);
         ichrome.bookmarks.update(project.bookmarkId, {
           'url': project.url
         }, function() {
@@ -191,14 +194,14 @@ define(
         return n.title === baseBookMarkName;
       });
       if (baseFolder) {
-        makeProjectFolders(projects, baseFolder);
+        makeProjectFolders(projects, baseFolder.id);
       } else {
         console.log("Adding base folder!");
         ichrome.bookmarks.create({
           'parentId': bookmarkBarId,
           'title': baseBookMarkName
         }, function(newFolder) {
-          makeProjectFolders(projects, newFolder);
+          makeProjectFolders(projects, newFolder.id);
         });
       }
     });
@@ -227,7 +230,7 @@ define(
                 tabDesc.active = true;
               });
               nodes.forEach(function(node) {
-                if (!project.tabDescs.findObject(function(td) {
+                if (!my.isProjectPageUrl(node.url) && !project.tabDescs.findObject(function(td) {
                   return td.url === node.url;
                 })) {
                   var newTabDesc = {

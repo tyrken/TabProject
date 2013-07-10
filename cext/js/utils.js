@@ -44,12 +44,17 @@ define(["jquery"], function($) {
         }
       }
       return null;
-    },
+    }
   };
 
   if (!Array.prototype.findObject) {
     Array.prototype.findObject = function(predicate) {
       return u.findObject(this, predicate);
+    };
+  }
+  if (!Array.prototype.clone) {
+    Array.prototype.clone = function() {
+      return this.slice(0);
     };
   }
   if (!String.prototype.isBlank) {
