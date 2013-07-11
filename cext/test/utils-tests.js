@@ -66,13 +66,16 @@ define(["utils"], function(utils) {
         cdl = new utils.CountDownLatch(2, function(){
           ++result;
         });
+        cdl.reserve(2);
+        cdl.tick();
+        cdl.tick();
         cdl.tick();
         cdl.tick();
       });
 
       waitsFor(function(){
         return result > 0;
-      }, 'Should trigger after 2 ticks', 500);
+      }, 'Should trigger after 4 ticks', 500);
 
       runs(function(){
         expect(cdl.count).toBe(0);

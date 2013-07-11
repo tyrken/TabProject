@@ -46,14 +46,16 @@ define(["jquery"], function($) {
       return null;
     },
 
+    DummyCountDownLatch: {
+      tick: function() {},
+      reserve: function(extra) {}
+    },
     CountDownLatch: function(count, callback) {
       if (count < 0) {
         throw "countDownLatch counter must not be negative";
       }
       if (!callback) {
-        return {
-          tick: function() {}
-        };
+        return u.DummyCountDownLatch;
       }
       this.count = count;
       this.callback = callback;
@@ -68,6 +70,9 @@ define(["jquery"], function($) {
     if (--this.count === 0) {
       this.callback();
     }
+  };
+  u.CountDownLatch.prototype.reserve = function(extra) {
+    this.count += extra;
   };
 
   if (!Array.prototype.findObject) {

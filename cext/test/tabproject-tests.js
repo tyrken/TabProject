@@ -76,17 +76,21 @@ define(['utils', 'ichrome', 'tabproject'], function(utils, ichrome, tp) {
     });
 
     it("Global bookmark update works", function() {
-      ichrome.reset();
+      var result = 0;
 
       runs(function() {
-        tp.makeAllBookmarks();
+        ichrome.reset();
+        tp.makeAllBookmarks(function() {
+          ++result;
+        });
       });
 
       waitsFor(function() {
-        return ichrome.bookmarks.added.length === 4;
+        return result > 0;
       }, 2000, 'all adding');
 
       runs(function() {
+        expect(result).toBe(1);
         expect(ichrome.bookmarks.added.length).toBe(4);
         expect(ichrome.bookmarks.added[0].title).toBe('New Page');
         expect(ichrome.bookmarks.added[0].url).toBe('http://unsaved.com');
