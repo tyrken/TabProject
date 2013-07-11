@@ -31,7 +31,7 @@ define(['utils', 'ichrome', 'tabproject'], function(utils, ichrome, tp) {
       });
 
       tp.getProjectFromDB('Project Blah', function(project) {
-        expect(project).toBe(null);
+        expect(project).toBeNull();
       });
     });
 
@@ -78,17 +78,22 @@ define(['utils', 'ichrome', 'tabproject'], function(utils, ichrome, tp) {
     it("Global bookmark update works", function() {
       ichrome.reset();
 
-      tp.scanTabsForProjects(function(projects) {
-        console.log('Got projects', projects);
-        ichrome.reset();
-        tp.makeAllBookmarks(projects);
+      runs(function() {
+        tp.makeAllBookmarks();
+      });
+
+      waitsFor(function() {
+        return ichrome.bookmarks.added.length === 4;
+      }, 2000, 'all adding');
+
+      runs(function() {
         expect(ichrome.bookmarks.added.length).toBe(4);
         expect(ichrome.bookmarks.added[0].title).toBe('New Page');
         expect(ichrome.bookmarks.added[0].url).toBe('http://unsaved.com');
         expect(ichrome.bookmarks.added[0].id).toBe(101);
         expect(ichrome.bookmarks.added[0].parentId).toBe(3);
         expect(ichrome.bookmarks.added[1].title).toBe('Project51');
-        expect(ichrome.bookmarks.added[1].url).toBe(undefined);
+        expect(ichrome.bookmarks.added[1].url).toBeUndefined();
         expect(ichrome.bookmarks.added[1].id).toBe(102);
         expect(ichrome.bookmarks.added[2].title).toBe('Project51');
         expect(ichrome.bookmarks.added[2].url).toBe('chrome-extension://abcd/project.html?name=Project51');

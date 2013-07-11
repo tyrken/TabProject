@@ -59,5 +59,25 @@ define(["utils"], function(utils) {
       expect('myinput'.startsWith('my')).toBe(true);
     });
 
+    it("CountDownLatch works", function() {
+      var cdl, result = 0;
+
+      runs(function(){
+        cdl = new utils.CountDownLatch(2, function(){
+          ++result;
+        });
+        cdl.tick();
+        cdl.tick();
+      });
+
+      waitsFor(function(){
+        return result > 0;
+      }, 'Should trigger after 2 ticks', 500);
+
+      runs(function(){
+        expect(cdl.count).toBe(0);
+        expect(result).toBe(1);
+      });
+    });
   });
 });

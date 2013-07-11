@@ -5,61 +5,6 @@ define(
   var bookmarkBarId = '1';
   var baseBookMarkName = "TabProject";
 
-  function makeProjectBookmarks(project, projectParentNodeId) {
-    console.log("Checking bookmarks for project " + project.name);
-    ichrome.bookmarks.getChildren(projectParentNodeId, function(entries) {
-      var projectUrl = my.getProjectPageUrl(project.name);
-      if (!entries.findObject(function(entry) {
-        return entry.url === projectUrl;
-      })) {
-        ichrome.bookmarks.create({
-          'parentId': projectParentNodeId,
-          'title': project.name,
-          url: projectUrl
-        }, function(newProjectNode) {
-          console.log("Added new bookmark for project " + project.name);
-        });
-      } else {
-        console.log("Already have bookmark for project " + project.name);
-      }
-      project.tabDescs.forEach(function(tabDesc) {
-        var found = entries.findObject(function(entry) {
-          return entry.url === tabDesc.url;
-        });
-        if (!found) {
-          ichrome.bookmarks.create({
-            'parentId': projectParentNodeId,
-            'title': tabDesc.title,
-            url: tabDesc.url
-          }, function(newProjectNode) {
-            console.log("Added new bookmark for " + tabDesc.title);
-          });
-        }
-      });
-    });
-  }
-
-  function makeProjectFolders(projects, baseNodeId) {
-    ichrome.bookmarks.getChildren(baseNodeId, function(projectParentNodes) {
-      projects.forEach(function(project) {
-        var projectParentNode = projectParentNodes.findObject(function(p) {
-          return p.title === project.name;
-        });
-        if (projectParentNode !== null) {
-          makeProjectBookmarks(project, projectParentNode.id);
-        } else {
-          ichrome.bookmarks.create({
-            'parentId': baseNodeId,
-            'title': project.name
-          }, function(newProjectParentNode) {
-            console.log("Added new folder for " + project.name);
-            makeProjectBookmarks(project, newProjectParentNode.id);
-          });
-        }
-      });
-    });
-  }
-
   var my = {};
 
   my.getMWOPH = function() {
@@ -94,8 +39,8 @@ define(
           curProject = {
             name: utils.getParameterByName(tab.url, 'name'),
             url: tab.url,
-            autosave: !!utils.getParameterByName(tab.url, 'as'),
-            autoopen: !!utils.getParameterByName(tab.url, 'ao'),
+            autosave: !! utils.getParameterByName(tab.url, 'as'),
+            autoopen: !! utils.getParameterByName(tab.url, 'ao'),
             tabDescs: []
           };
           projects.push(curProject);
@@ -134,8 +79,8 @@ define(
                   project.bookmarkId = n.id;
                   project.url = n.url;
                   project.name = utils.getParameterByName(n.url, 'name');
-                  project.autosave = !!utils.getParameterByName(n.url, 'as');
-                  project.autoopen = !!utils.getParameterByName(n.url, 'ao');
+                  project.autosave = !! utils.getParameterByName(n.url, 'as');
+                  project.autoopen = !! utils.getParameterByName(n.url, 'ao');
                   nodes.splice(i, 1);
                   break;
                 }
@@ -188,23 +133,108 @@ define(
     });
   };
 
-  my.makeAllBookmarks = function(projects) {
-    ichrome.bookmarks.getChildren(bookmarkBarId, function(nodes) {
-      var baseFolder = nodes.findObject(function(n) {
-        return n.title === baseBookMarkName;
-      });
-      if (baseFolder) {
-        makeProjectFolders(projects, baseFolder.id);
-      } else {
-        console.log("Adding base folder!");
-        ichrome.bookmarks.create({
-          'parentId': bookmarkBarId,
-          'title': baseBookMarkName
-        }, function(newFolder) {
-          makeProjectFolders(projects, newFolder.id);
+  function makeProjectBookmarks(project, projectParentNodeId, callback) {
+    console.log("Checking bookmarks for project " + project.name);
+    ichrome.bookmarks.getChildren(projectParentNodeId, function(entries) {
+      var projectUrl = my.getProjectPageUrl(project.name);
+      if (callback) {
+        var semaphore = new utils.CountDownLatch(1 + project.tabDescs.length, callback);
+        if (!entries.findObject(function(entry) {
+          return entry.url === projectUrl;
+        })) {
+          ichrome.bookmarks.create({
+            'parentId': projectParentNodeId,
+            'title': project.name,
+            url: projectUrl
+          }, function(newProjectNode) {
+            console.log("Added new bookmark for project " + project.name);
+            semaphore.tick();
+          });
+        } else {
+          console.log("Already have bookmark for project " + project.name);
+          semaphore.tick();
+        }
+        project.tabDescs.forEach(function(tabDesc) {
+          var found = entries.findObject(function(entry) {
+            return entry.url === tabDesc.url;
+          });
+          if (found) {
+            semaphore.tick();
+          } else {
+            ichrome.bookmarks.create({
+              'parentId': projectParentNodeId,
+              'title': tabDesc.title,
+              url: tabDesc.url
+            }, function(newProjectNode) {
+              console.log("Added new bookmark for " + tabDesc.title);
+              semaphore.tick();
+            });
+          }
         });
-      }
+      };
     });
+  }
+
+  function makeProjectFolders(projects, baseNodeId, callback) {
+    ichrome.bookmarks.getChildren(baseNodeId, function(projectParentNodes) {
+      projects.forEach(function(project) {
+        var projectParentNode = projectParentNodes.findObject(function(p) {
+          return p.title === project.name;
+        });
+        if (projectParentNode !== null) {
+          makeProjectBookmarks(project, projectParentNode.id, callback);
+        } else {
+          ichrome.bookmarks.create({
+            'parentId': baseNodeId,
+            'title': project.name
+          }, function(newProjectParentNode) {
+            console.log("Added new folder for " + project.name);
+            makeProjectBookmarks(project, newProjectParentNode.id, callback);
+          });
+        }
+      });
+    });
+  }
+
+  my.makeBookmarks = function(projectName, callback) {
+    my.scanTabsForProjects(function(projects) {
+
+      if (typeof projectName === 'undefined') {
+        if (callback) {
+          throw "Can only use callback if a single project";
+        }
+      } else {
+        var project = projects.findObject(function(p) {
+          return p.name === projectName;
+        });
+        if (!project) {
+          callback();
+          return;
+        }
+        projects = [project];
+      }
+
+      ichrome.bookmarks.getChildren(bookmarkBarId, function(nodes) {
+        var baseFolder = nodes.findObject(function(n) {
+          return n.title === baseBookMarkName;
+        });
+        if (baseFolder) {
+          makeProjectFolders(projects, baseFolder.id, callback);
+        } else {
+          console.log("Adding base folder!");
+          ichrome.bookmarks.create({
+            'parentId': bookmarkBarId,
+            'title': baseBookMarkName
+          }, function(newBaseFolder) {
+            makeProjectFolders(projects, newBaseFolder.id, callback);
+          });
+        }
+      });
+    });
+  };
+
+  my.makeAllBookmarks = function() {
+    my.makeBookmarks();
   };
 
   my.lookupProjectContent = function(projectName, callback) {

@@ -44,6 +44,29 @@ define(["jquery"], function($) {
         }
       }
       return null;
+    },
+
+    CountDownLatch: function(count, callback) {
+      if (count < 0) {
+        throw "countDownLatch counter must not be negative";
+      }
+      if (!callback) {
+        return {
+          tick: function() {}
+        };
+      }
+      this.count = count;
+      this.callback = callback;
+      if (count === 0) {
+        callback();
+      }
+      return this;
+    }
+  };
+
+  u.CountDownLatch.prototype.tick = function() {
+    if (--this.count === 0) {
+      this.callback();
     }
   };
 
