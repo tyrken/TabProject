@@ -66,8 +66,8 @@ define(["utils"], function(utils) {
         cdl = new utils.CountDownLatch(2, function(){
           ++result;
         });
-        cdl.reserve(2);
         cdl.tick();
+        cdl.reserve(2);
         cdl.tick();
         cdl.tick();
         cdl.tick();
