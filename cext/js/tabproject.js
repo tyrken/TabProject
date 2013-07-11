@@ -49,7 +49,8 @@ define(
           var tabDesc = {
             title: tab.title,
             url: tab.url,
-            favIconUrl: tab.favIconUrl
+            favIconUrl: tab.favIconUrl,
+            id: tab.id
           };
           curProject.tabDescs.push(tabDesc);
           console.log('ProjectTab', tabDesc);
@@ -195,7 +196,7 @@ define(
     });
   }
 
-  my.makeBookmarks = function(callback, projectName) {
+  my.makeBookmarks = function(projectName, callback) {
     my.scanTabsForProjects(function(projects) {
 
       if (typeof projectName !== 'undefined') {
@@ -234,7 +235,7 @@ define(
   };
 
   my.makeAllBookmarks = function(callback) {
-    my.makeBookmarks(callback);
+    my.makeBookmarks(undefined, callback);
   };
 
   my.lookupProjectContent = function(projectName, callback) {
