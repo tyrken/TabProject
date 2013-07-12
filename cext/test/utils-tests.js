@@ -25,7 +25,9 @@ define(["utils"], function(utils) {
       expect(utils.setHashParameterByName("http://mystuff?F=X#x=1&y=p%20e&q=123", 'y', 'tt 5')).toEqual('http://mystuff?F=X#x=1&y=tt%205&q=123');
       expect(utils.setHashParameterByName("http://mystuff?F=X#x=1&y=p%20e", 'y', '4')).toEqual('http://mystuff?F=X#x=1&y=4');
       expect(utils.setHashParameterByName("http://mystuff?y=p", 'y', '4')).toEqual('http://mystuff?y=p#y=4');
-      expect(utils.setHashParameterByName("http://mystuff#y=p", 'y', null)).toEqual('http://mystuff#');
+      expect(utils.setHashParameterByName("http://mystuff", 'y', '4')).toEqual('http://mystuff#y=4');
+      expect(utils.setHashParameterByName("http://mystuff#", 'y', '4')).toEqual('http://mystuff#y=4');
+      expect(utils.setHashParameterByName("http://mystuff#y=p", 'y', null)).toEqual('http://mystuff');
       expect(utils.setHashParameterByName("http://mystuff#x=7&y=p", 'y', null)).toEqual('http://mystuff#x=7');
       expect(utils.setHashParameterByName("http://mystuff#y=p&t=2", 'y', null)).toEqual('http://mystuff#t=2');
     });

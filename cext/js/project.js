@@ -1,3 +1,22 @@
+requirejs.config({
+  //appDir: ".",
+  baseUrl: "..",
+  paths: {
+    'jquery': ['lib/jquery'],
+    'bootstrap': ['lib/bootstrap'],
+    'tabproject': ['js/tabproject'],
+    'jasmine': ['lib/jasmine-1.3.1/jasmine'],
+    'jasmine-html': ['lib/jasmine-1.3.1/jasmine-html'],
+    'jasmine-gui': ['test/jasmine-gui'],
+    'utils': ['js/utils'],
+    'ichrome': ['js/ichrome']
+    },
+  shim: {
+    /* Set bootstrap dependencies (just jQuery) */
+    'bootstrap' : ['jquery']
+  }
+});
+
 require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, tp, utils) {
   "use strict";
 
@@ -15,7 +34,7 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
   }
 
   function displayProjectContent(project) {
-    var items = [];
+    var items = ['<ul>'];
     project.tabDescs.forEach(function(tabDesc) {
       items.push('<li><a href="' + tabDesc.url + '">' + tabDesc.title + '</a>');
       if (tabDesc.bookmarked) items.push(' B ');
@@ -25,12 +44,13 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
     if (project.tabDescs.length === 0) {
       items.push('<li>No project content yet!</li>');
     }
-    $('#projectContent').append(items.join(''));
+    items.push('</ul>');
+    $('#projectContent').html(items.join(''));
 
     displayProjectSettings(project);
   }
 
-  tp.lookupProjectContent(projectName, displayProjectContent);
+  $(tp.lookupProjectContent(projectName, displayProjectContent));
 
   $('input:checkbox').on('click', function(event) {
     var param = $(this).attr('id') === 'autosave' ? 'as' : 'ao';
@@ -41,12 +61,12 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
   });
 
   $('#saveAll').on('click', function(event) {
-    tp.makeBookmarks(function() {
+    tp.makeBookmarks(projectName, function() {
       tp.lookupProjectContent(projectName, function(project) {
         displayProjectContent(project);
         alert("Saved " + projectName);
       });
-    }, projectName);
+    });
   });
 
   $('#close').on('click', function(event) {
@@ -64,7 +84,7 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
       }
       if (answer === true) {
         console.log("Closing project " + projectName);
-        var tabIds = [];
+        var tabIds = [project.tabId];
         project.tabDescs.forEach(function(td) {
           if (td.active && td.tabIds > 1) {
             tabIds.push(td.tabId);
@@ -72,7 +92,6 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
         });
         chrome.tabs.remove(tabIds);
       }
-
     }, projectName);
   });
 

@@ -10,7 +10,7 @@ define(["jquery"], function($) {
     setHashParameterByName: function(url, name, value) {
       if (value === null) {
         var re2 = new RegExp('([&#])' + name + '=[^&]*&?');
-        var re3 = new RegExp('&$');
+        var re3 = new RegExp('[&#]$');
         url = url.replace(re2, '$1');
         url = url.replace(re3, '');
       } else {
@@ -20,7 +20,14 @@ define(["jquery"], function($) {
         if (match) {
           url = url.substring(0, match.index) + match[1] + newHashParam + url.substring(re.lastIndex);
         } else {
-          url = url + (url.indexOf('#') > 0 ? '&' : '#') + newHashParam;
+          if (!/[#&]$/.test(url)) {
+            if (url.indexOf('#') > 0) {
+              url = url + '&';
+            } else {
+              url = url + '#';
+            }
+          }
+          url = url + newHashParam;
         }
       }
       return url;

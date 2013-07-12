@@ -39,6 +39,7 @@ define(
           curProject = {
             name: utils.getParameterByName(tab.url, 'name'),
             url: tab.url,
+            tabId: tab.id,
             autosave: !! utils.getParameterByName(tab.url, 'as'),
             autoopen: !! utils.getParameterByName(tab.url, 'ao'),
             tabDescs: []
