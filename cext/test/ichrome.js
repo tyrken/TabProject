@@ -70,6 +70,14 @@ define(function() {
         index: 1,
         title: 'Funnyville',
         url: 'http://funny.com'
+      }, {
+        index: 2,
+        title: 'STOP page',
+        url: 'chrome-extension://abcd/stop.html'
+      }, {
+        index: 3,
+        title: 'Misc page',
+        url: 'http://funnyxx.com'
       }
     ],
 

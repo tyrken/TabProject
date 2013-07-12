@@ -17,7 +17,7 @@ requirejs.config({
   }
 });
 
-require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, TPM, utils) {
+require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, tp, utils) {
   "use strict";
 
   console.log("Loaded popup via require:)");
@@ -32,7 +32,7 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, T
       alert("You must enter a Project Name first!");
       return;
     }
-    var projectPageUrl = TPM.getProjectPageUrl(name);
+    var projectPageUrl = tp.getProjectPageUrl(name);
     chrome.tabs.create({
       url: projectPageUrl
     });
@@ -48,7 +48,14 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, T
       my.addNewProject();
     });
 
-    TPM.listDBProjects(function(projects) {
+    $('#addStopButton').on('click', function(event) {
+      var stopPageUrl = tp.StopPageUrl;
+      chrome.tabs.create({
+        url: stopPageUrl
+      });
+    });
+
+    tp.listDBProjects(function(projects) {
       var items = ['<ul>'];
       projects.forEach(function(project) {
         items.push('<li class="clickable">' + project.name + '</li>');
@@ -60,7 +67,7 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, T
       $('#projectList').append(items.join(''));
       $('li.clickable').on('click', function() {
         var name = $(this).text();
-        var projectPageUrl = TPM.getProjectPageUrl(name);
+        var projectPageUrl = tp.getProjectPageUrl(name);
         chrome.tabs.create({
           url: projectPageUrl
         });

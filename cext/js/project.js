@@ -10,10 +10,10 @@ requirejs.config({
     'jasmine-gui': ['test/jasmine-gui'],
     'utils': ['js/utils'],
     'ichrome': ['js/ichrome']
-    },
+  },
   shim: {
     /* Set bootstrap dependencies (just jQuery) */
-    'bootstrap' : ['jquery']
+    'bootstrap': ['jquery']
   }
 });
 
@@ -60,6 +60,24 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
     });
   });
 
+  $('#openAll').on('click', function(event) {
+    tp.lookupProjectContent(projectName, function(project) {
+      var lastIndex = project.tabIndex;
+      project.tabDescs.forEach(function(td) {
+        if (!td.active) {
+          chrome.tabs.create({
+            url: td.url,
+            windowId: project.tabWindowId,
+            index: ++lastIndex,
+            openerTabId: project.tabId
+          });
+        } else {
+          lastIndex = td.index;
+        }
+      });
+    });
+  });
+
   $('#saveAll').on('click', function(event) {
     tp.makeBookmarks(projectName, function() {
       tp.lookupProjectContent(projectName, function(project) {
@@ -86,8 +104,8 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
         console.log("Closing project " + projectName);
         var tabIds = [project.tabId];
         project.tabDescs.forEach(function(td) {
-          if (td.active && td.tabIds > 1) {
-            tabIds.push(td.tabId);
+          if (td.active && td.id >= 1) {
+            tabIds.push(td.id);
           }
         });
         chrome.tabs.remove(tabIds);
