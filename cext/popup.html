@@ -2,23 +2,30 @@
 <html>
   <head>
     <title>TabProjects's Popup</title>
-    <style>
-      body {
-        min-width: 357px;
-      }
-    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
     <script src="/lib/require.js" data-main="/js/popup"></script>
   </head>
   <body>
-    <form>
-      <input type='text' id='newProjectName' width='50'/>
-      <input type='submit' id='newProjectButton' value='Create Project'></input>
-      <input type='button' id='addStopButton' value='Create STOP tab'></input>
+    <form style="padding-left: 9px; padding-top:9px; padding-right:9px;">
+      <div class="row" >
+        <div class="span3">
+          <input type='text' id='newProjectName' width='60' placeholder='Enter new project name here!'/>
+        </div>
+        <div class="span2">
+          <input type='submit' id='newProjectButton' value='Create Project'></input>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span5">
+          <div id='projectList'></div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span5">
+          <input type='button' id='addStopButton' value='Create STOP tab'></input>
+        </div>
+      </div>
     </form>
-    <hr/>
-    <div id='projectList'></div>
-    <div id='log'></div>
   </body>
 </html>

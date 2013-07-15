@@ -24,11 +24,9 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
 
   var my = {};
 
-  var initProjectNamePrompt = "Enter new project name here!";
-
   my.addNewProject = function() {
     var name = $.trim($('#newProjectName').val());
-    if (name === initProjectNamePrompt || name === "") {
+    if (name === "") {
       alert("You must enter a Project Name first!");
       return;
     }
@@ -39,9 +37,9 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
   };
 
   my.init = function() {
-    $("#newProjectName").val(initProjectNamePrompt).on('keyup input', function() {
+    $("#newProjectName").on('keyup input', function() {
       var name = $.trim($(this).val());
-      $("#newProjectButton").prop("disabled", name === initProjectNamePrompt || name === "");
+      $("#newProjectButton").prop("disabled", name === "");
     });
 
     $('#newProjectButton').prop("disabled", "true").click(function() {
