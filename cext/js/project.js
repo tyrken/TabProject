@@ -34,12 +34,12 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
   }
 
   function displayProjectContent(project) {
-    var items = ['<ul>'];
+    var items = ['<ul class="projectContent clearfix">'];
     project.tabDescs.forEach(function(tabDesc) {
-      items.push('<li><a href="' + tabDesc.url + '">' + tabDesc.title + '</a>');
-      if (tabDesc.bookmarked) items.push(' B ');
-      if (tabDesc.active) items.push(' A ');
-      items.push('</li>');
+      var iconClass = tabDesc.bookmarked ? 'icon-star' : 'icon-star-empty';
+      var activityClass = tabDesc.active ? 'active' : 'inactive';
+
+      items.push('<li><i class="'+iconClass+'"></i> <a href="' + tabDesc.url + '" class="'+activityClass+'">' + tabDesc.title + '</a></li>');
     });
     if (project.tabDescs.length === 0) {
       items.push('<li>No project content yet!</li>');
@@ -47,7 +47,18 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
     items.push('</ul>');
     $('#projectContent').html(items.join(''));
 
-    displayProjectSettings(project);
+    $('i[class="icon-star-empty"]').on('click', function(event) {
+      var link = $(this).next();
+      console.log('icon-click', link);
+      alert("Save URL:"+ link.attr('href')+", Title:"+link.text());
+    });
+
+    $('a[class="inactive"]').on('click', function(event) {
+      event.preventDefault();
+      alert("Open URL:"+ $(this).attr('href')+", Title:"+$(this).text());
+    });
+
+   displayProjectSettings(project);
   }
 
   $(tp.lookupProjectContent(projectName, displayProjectContent));
