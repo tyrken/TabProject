@@ -48,20 +48,37 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
     $('#projectContent').html(items.join(''));
 
     $('i[class="icon-star-empty"]').on('click', function(event) {
-      var link = $(this).next();
-      console.log('icon-click', link);
-      alert("Save URL:"+ link.attr('href')+", Title:"+link.text());
+      var icon = $(this);
+      var link = icon.next();
+      //console.log('icon-click', link);
+      tp.saveBookmark(project, link.attr('href'), link.text(), function(node) {
+        icon.attr('class', 'icon-star');
+      });
     });
 
     $('a[class="inactive"]').on('click', function(event) {
       event.preventDefault();
-      alert("Open URL:"+ $(this).attr('href')+", Title:"+$(this).text());
+      var anchor = $(this);
+      chrome.tabs.create({
+        url: $(this).attr('href'),
+        windowId: project.tabWindowId,
+        index: project.tabIndex+1,
+        openerTabId: project.tabId,
+        active: false
+      }, function(tab) {
+        var li = anchor.parent();
+        li.parent().prepend(li);
+        anchor.attr('class', 'active');
+        //tp.lookupProjectContent(projectName, displayProjectContent);
+      });
     });
 
    displayProjectSettings(project);
   }
 
-  $(tp.lookupProjectContent(projectName, displayProjectContent));
+  $(document).ready(function(){
+    tp.lookupProjectContent(projectName, displayProjectContent);
+  });
 
   $('input:checkbox').on('click', function(event) {
     var param = $(this).attr('id') === 'autosave' ? 'as' : 'ao';

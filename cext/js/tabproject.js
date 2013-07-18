@@ -141,6 +141,17 @@ define(
       });
     };
 
+    my.saveBookmark = function(project, url, title, callback) {
+      ichrome.bookmarks.create({
+        parentId: project.folderBookmarkId,
+        title: title,
+        url: url
+      }, function(newProjectNode) {
+        //console.log("Added new bookmark for " + tabDesc.title);
+        callback(newProjectNode);
+      });
+    };
+
     function makeProjectBookmarks(project, projectParentNodeId, cdl) {
       console.log("Checking bookmarks for project " + project.name);
       ichrome.bookmarks.getChildren(projectParentNodeId, function(entries) {
