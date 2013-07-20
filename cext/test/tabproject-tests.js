@@ -42,18 +42,18 @@ define(['utils', 'ichrome', 'tabproject'], function(utils, ichrome, tp) {
         expect(projects[0].name).toBe("Project1");
         expect(projects[0].autosave).toBe(false);
         expect(projects[0].autoopen).toBe(false);
-        expect(projects[0].tabDescs.length).toBe(2);
-        expect(projects[0].tabDescs[0].title).toBe('Some Page');
-        expect(projects[0].tabDescs[1].url).toBe('http://unsaved.com');
+        expect(projects[0].links.length).toBe(2);
+        expect(projects[0].links[0].title).toBe('Some Page');
+        expect(projects[0].links[1].url).toBe('http://unsaved.com');
         expect(projects[1].name).toBe("Project51");
         expect(projects[1].autosave).toBe(true);
         expect(projects[1].autoopen).toBe(false);
-        expect(projects[1].tabDescs.length).toBe(1);
-        expect(projects[1].tabDescs[0].title).toBe('Funnyville');
+        expect(projects[1].links.length).toBe(1);
+        expect(projects[1].links[0].title).toBe('Funnyville');
       });
     });
 
-    it("Can merge a single project's info from tabs and bookmarks", function() {
+    /*it("Can merge a single project's info from tabs and bookmarks", function() {
       ichrome.reset();
 
       tp.lookupProjectContent('Project1', function(project) {
@@ -62,18 +62,18 @@ define(['utils', 'ichrome', 'tabproject'], function(utils, ichrome, tp) {
         expect(project.url).toBe('chrome-extension://abcd/project.html?name=Project1');
         expect(project.autosave).toBe(false);
         expect(project.autoopen).toBe(false);
-        expect(project.tabDescs.length).toBe(3);
-        expect(project.tabDescs[0].title).toBe('Some Page');
-        expect(project.tabDescs[0].active).toBe(true);
-        expect(project.tabDescs[0].bookmarked).toBe(true);
-        expect(project.tabDescs[1].url).toBe('http://unsaved.com');
-        expect(project.tabDescs[1].active).toBe(true);
-        expect(project.tabDescs[1].bookmarked).toBe(false);
-        expect(project.tabDescs[2].title).toBe('Some Page#2');
-        expect(project.tabDescs[2].active).toBe(false);
-        expect(project.tabDescs[2].bookmarked).toBe(true);
+        expect(project.links.length).toBe(3);
+        expect(project.links[0].title).toBe('Some Page');
+        expect(project.links[0].active).toBe(true);
+        expect(project.links[0].bookmarked).toBe(true);
+        expect(project.links[1].url).toBe('http://unsaved.com');
+        expect(project.links[1].active).toBe(true);
+        expect(project.links[1].bookmarked).toBe(false);
+        expect(project.links[2].title).toBe('Some Page#2');
+        expect(project.links[2].active).toBe(false);
+        expect(project.links[2].bookmarked).toBe(true);
       });
-    });
+    }); */
 
     it("Can merge all projects from tabs and bookmarks", function() {
       ichrome.reset();
@@ -85,41 +85,44 @@ define(['utils', 'ichrome', 'tabproject'], function(utils, ichrome, tp) {
         expect(projects[0].name).toBe("(Unallocated)");
         expect(projects[0].autosave).toBe(false);
         expect(projects[0].autoopen).toBe(false);
-        expect(projects[0].tabDescs.length).toBe(2);
-        expect(projects[0].tabDescs[0].title).toBe('Some Page');
-        expect(projects[0].tabDescs[1].url).toBe('http://somewhere.com/2');
+        expect(projects[0].links.length).toBe(2);
+        expect(projects[0].links[0].title).toBe('Blah tab');
+        expect(projects[0].links[0].url).toBe('http://gfjklsdf.com');
+        expect(projects[0].links[1].title).toBe('Misc page');
+        expect(projects[0].links[1].url).toBe('http://funnyxx.com');
 
         expect(projects[1].name).toBe("Project1");
         expect(projects[1].autosave).toBe(false);
         expect(projects[1].autoopen).toBe(false);
-        expect(projects[1].tabDescs.length).toBe(2);
-        expect(projects[1].tabDescs[0].title).toBe('Some Page');
-        expect(projects[1].tabDescs[1].url).toBe('http://somewhere.com/2');
+        expect(projects[1].links.length).toBe(3);
+        expect(projects[1].links[0].title).toBe('Some Page');
+        expect(projects[1].links[1].url).toBe('http://somewhere.com/2');
+        expect(projects[1].links[2].url).toBe('http://unsaved.com');
         expect(projects[2].name).toBe("Project2");
         expect(projects[2].autosave).toBe(false);
         expect(projects[2].autoopen).toBe(true);
-        expect(projects[2].tabDescs.length).toBe(1);
-        expect(projects[2].tabDescs[0].title).toBe('Some Other Page');
+        expect(projects[2].links.length).toBe(1);
+        expect(projects[2].links[0].title).toBe('Some Other Page');
         expect(projects[3].name).toBe("Project51");
         expect(projects[3].autosave).toBe(true);
         expect(projects[3].autoopen).toBe(false);
-        expect(projects[3].tabDescs.length).toBe(1);
-        expect(projects[3].tabDescs[0].title).toBe('Funnyville');
+        expect(projects[3].links.length).toBe(1);
+        expect(projects[3].links[0].title).toBe('Funnyville');
 /*
         expect(project.name).toBe('Project1');
         expect(project.url).toBe('chrome-extension://abcd/project.html?name=Project1');
         expect(project.autosave).toBe(false);
         expect(project.autoopen).toBe(false);
-        expect(project.tabDescs.length).toBe(3);
-        expect(project.tabDescs[0].title).toBe('Some Page');
-        expect(project.tabDescs[0].active).toBe(true);
-        expect(project.tabDescs[0].bookmarked).toBe(true);
-        expect(project.tabDescs[1].url).toBe('http://unsaved.com');
-        expect(project.tabDescs[1].active).toBe(true);
-        expect(project.tabDescs[1].bookmarked).toBe(false);
-        expect(project.tabDescs[2].title).toBe('Some Page#2');
-        expect(project.tabDescs[2].active).toBe(false);
-        expect(project.tabDescs[2].bookmarked).toBe(true); */
+        expect(project.links.length).toBe(3);
+        expect(project.links[0].title).toBe('Some Page');
+        expect(project.links[0].active).toBe(true);
+        expect(project.links[0].bookmarked).toBe(true);
+        expect(project.links[1].url).toBe('http://unsaved.com');
+        expect(project.links[1].active).toBe(true);
+        expect(project.links[1].bookmarked).toBe(false);
+        expect(project.links[2].title).toBe('Some Page#2');
+        expect(project.links[2].active).toBe(false);
+        expect(project.links[2].bookmarked).toBe(true); */
       });
     });
 

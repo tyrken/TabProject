@@ -35,13 +35,13 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
 
   function displayProjectContent(project) {
     var items = ['<ul class="projectContent clearfix">'];
-    project.tabDescs.forEach(function(tabDesc) {
-      var iconClass = tabDesc.bookmarked ? 'icon-star' : 'icon-star-empty';
-      var activityClass = tabDesc.active ? 'active' : 'inactive';
+    project.links.forEach(function(link) {
+      var iconClass = link.bookmarked ? 'icon-star' : 'icon-star-empty';
+      var activityClass = link.active ? 'active' : 'inactive';
 
-      items.push('<li><i class="'+iconClass+'"></i> <a href="' + tabDesc.url + '" class="'+activityClass+'">' + tabDesc.title + '</a></li>');
+      items.push('<li><i class="'+iconClass+'"></i> <a href="' + link.url + '" class="'+activityClass+'">' + link.title + '</a></li>');
     });
-    if (project.tabDescs.length === 0) {
+    if (project.links.length === 0) {
       items.push('<li>No project content yet!</li>');
     }
     items.push('</ul>');
@@ -101,16 +101,16 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
   $('#openAll').on('click', function(event) {
     tp.lookupProjectContent(projectName, function(project) {
       var lastIndex = project.tabIndex;
-      project.tabDescs.forEach(function(td) {
-        if (!td.active) {
+      project.links.forEach(function(link) {
+        if (!link.active) {
           chrome.tabs.create({
-            url: td.url,
+            url: link.url,
             windowId: project.tabWindowId,
             index: ++lastIndex,
             openerTabId: project.tabId
           });
         } else {
-          lastIndex = td.index;
+          lastIndex = link.tabIndex;
         }
       });
     });
@@ -128,9 +128,9 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
   $('#close').on('click', function(event) {
     tp.lookupProjectContent(projectName, function(project) {
       var unsaved = [];
-      project.tabDescs.forEach(function(td) {
-        if (td.active && !td.bookmarked) {
-          unsaved.push(td);
+      project.links.forEach(function(link) {
+        if (link.active && !link.bookmarked) {
+          unsaved.push(link);
         }
       });
       var answer = true;
@@ -141,9 +141,9 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
       if (answer === true) {
         console.log("Closing project " + projectName);
         var tabIds = [project.tabId];
-        project.tabDescs.forEach(function(td) {
-          if (td.active && td.id >= 1) {
-            tabIds.push(td.id);
+        project.links.forEach(function(link) {
+          if (link.active && link.tabId >= 1) {
+            tabIds.push(link.tabId);
           }
         });
         chrome.tabs.remove(tabIds);

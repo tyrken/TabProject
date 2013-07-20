@@ -47,35 +47,51 @@ define(function() {
       ]
     },
     fake_tabs: [{
+        id: 20,
         index: 0,
+        windowId: 100,
         title: 'Blah tab',
         url: 'http://gfjklsdf.com'
       }, {
+        id: 21,
         index: 1,
+        windowId: 100,
         title: 'Project 1',
         url: 'chrome-extension://abcd/project.html?name=Project1'
       }, {
+        id: 22,
         index: 2,
+        windowId: 100,
         title: 'Some Page',
         url: 'http://somewhere.com'
       }, {
+        id: 23,
         index: 3,
+        windowId: 100,
         title: 'New Page',
         url: 'http://unsaved.com'
       }, {
+        id: 24,
         index: 0,
+        windowId: 101,
         title: 'Project 51',
         url: 'chrome-extension://abcd/project.html?name=Project51#as=1'
       }, {
+        id: 25,
         index: 1,
+        windowId: 101,
         title: 'Funnyville',
         url: 'http://funny.com'
       }, {
+        id: 26,
         index: 2,
+        windowId: 101,
         title: 'STOP page',
         url: 'chrome-extension://abcd/stop.html'
       }, {
+        id: 27,
         index: 3,
+        windowId: 101,
         title: 'Misc page',
         url: 'http://funnyxx.com'
       }

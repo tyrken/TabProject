@@ -45,22 +45,23 @@ define(
               tabWindowId: tab.windowId,
               autosave: !! utils.getParameterByName(tab.url, 'as'),
               autoopen: !! utils.getParameterByName(tab.url, 'ao'),
-              tabDescs: []
+              links: []
             };
             projects.push(curProject);
             console.log('FirstProjectTab', curProject);
           } else if (tab.url == my.StopPageUrl) {
             curProject = null;
           } else if (curProject !== null) {
-            var tabDesc = {
+            var link = {
               title: tab.title,
               url: tab.url,
               favIconUrl: tab.favIconUrl,
-              id: tab.id,
-              index: tab.index
+              tabId: tab.id,
+              tabIndex: tab.index,
+              tabWindowId: tab.windowId
             };
-            curProject.tabDescs.push(tabDesc);
-            console.log('ProjectTab', tabDesc);
+            curProject.links.push(link);
+            console.log('ProjectTab', link);
           }
         });
         console.log('Finished scanTabs', projects);
@@ -94,12 +95,12 @@ define(
                   }
                 }
                 project.storedBookmarks = nodes;
-                project.tabDescs = [];
+                project.links = [];
                 nodes.forEach(function(node) {
-                  if (!my.isProjectPageUrl(node.url) && !project.tabDescs.findObject(function(td) {
+                  if (!my.isProjectPageUrl(node.url) && !project.links.findObject(function(td) {
                     return td.url === node.url;
                   })) {
-                    var newTabDesc = {
+                    var newLink = {
                       title: node.title,
                       url: node.url,
                       favIconUrl: node.favIconUrl,
@@ -108,7 +109,7 @@ define(
                       bookmarked: true,
                       active: false
                     };
-                    project.tabDescs.push(newTabDesc);
+                    project.links.push(newLink);
                   }
                 });
                 return callback(project, --counter);
@@ -147,7 +148,9 @@ define(
         ichrome.tabs.query({}, function(tabs) {
           var nullProject = {
             name: "(Unallocated)",
-            tabDescs: []
+            autosave: false,
+            autoopen: false,
+            links: []
           };
           var curProject = nullProject;
           projects.unshift(nullProject);
@@ -164,32 +167,41 @@ define(
               if (curProject === null) {
                 curProject = {
                   name: projectName,
-                  url: tab.url,
-                  tabId: tab.id,
-                  tabIndex: tab.index,
-                  tabWindowId: tab.windowId,
-                  autosave: !! utils.getParameterByName(tab.url, 'as'),
-                  autoopen: !! utils.getParameterByName(tab.url, 'ao'),
-                  tabDescs: []
+                  links: []
                 };
                 projects.push(curProject);
               }
+              curProject.url = tab.url;
+              curProject.tabId = tab.id;
+              curProject.tabIndex = tab.index;
+              curProject.tabWindowId = tab.windowId;
+              curProject.autosave = !! utils.getParameterByName(tab.url, 'as');
+              curProject.autoopen = !! utils.getParameterByName(tab.url, 'ao');
+
               console.log('FirstProjectTab', curProject);
             } else if (tab.url == my.StopPageUrl) {
               curProject = nullProject;
             } else {
-              var tabDesc = {
-                title: tab.title,
-                url: tab.url,
-                favIconUrl: tab.favIconUrl,
-                id: tab.id,
-                index: tab.index
-              };
-              curProject.tabDescs.push(tabDesc);
-              console.log('ProjectTab', tabDesc);
+              var link = curProject.links.findObject(function(l) {
+                return l.url === tab.url;
+              });
+              if (link === null) {
+                link = {
+                  url: tab.url,
+                  bookmarked: false
+                };
+                curProject.links.push(link);
+              }
+              link.title = tab.title;
+              link.favIconUrl = tab.favIconUrl;
+              link.tabId = tab.id;
+              link.tabIndex = tab.index;
+              link.tabWindowId = tab.windowId;
+              link.active = true;
+              console.log('Link entry', link);
             }
           });
-          if (nullProject.tabDescs.length === 0) {
+          if (nullProject.links.length === 0) {
             projects.shift();
           }
           console.log('Finished getProjectsFromDBAndTabs', projects);
@@ -220,7 +232,7 @@ define(
         title: title,
         url: url
       }, function(newProjectNode) {
-        //console.log("Added new bookmark for " + tabDesc.title);
+        //console.log("Added new bookmark for " + link.title);
         callback(newProjectNode);
       });
     };
@@ -229,7 +241,7 @@ define(
       console.log("Checking bookmarks for project " + project.name);
       ichrome.bookmarks.getChildren(projectParentNodeId, function(entries) {
         var projectUrl = my.getProjectPageUrl(project.name);
-        cdl.reserve(project.tabDescs.length);
+        cdl.reserve(project.links.length);
         if (!entries.findObject(function(entry) {
           return entry.url === projectUrl;
         })) {
@@ -245,19 +257,19 @@ define(
           console.log("Already have bookmark for project " + project.name);
           cdl.tick();
         }
-        project.tabDescs.forEach(function(tabDesc) {
+        project.links.forEach(function(link) {
           var found = entries.findObject(function(entry) {
-            return entry.url === tabDesc.url;
+            return entry.url === link.url;
           });
           if (found) {
             cdl.tick();
           } else {
             ichrome.bookmarks.create({
-              'parentId': projectParentNodeId,
-              'title': tabDesc.title,
-              url: tabDesc.url
+              parentId: projectParentNodeId,
+              title: link.title,
+              url: link.url
             }, function(newProjectNode) {
-              console.log("Added new bookmark for " + tabDesc.title);
+              console.log("Added new bookmark for " + link.title);
               cdl.tick();
             });
           }
@@ -329,7 +341,7 @@ define(
       my.makeBookmarks(undefined, callback);
     };
 
-    my.lookupProjectContent = function(projectName, callback) {
+/*    my.lookupProjectContent = function(projectName, callback) {
       my.scanTabsForProjects(function(projects) {
         ichrome.bookmarks.getChildren(bookmarkBarId, function(nodes) {
           var baseNode = nodes.findObject(function(n) {
@@ -345,17 +357,17 @@ define(
               });
               project.folderBookmarkId = projectNode.id;
               ichrome.bookmarks.getChildren(projectNode.id, function(nodes) {
-                project.tabDescs.forEach(function(tabDesc) {
-                  tabDesc.bookmarked = nodes.findObject(function(n) {
-                    return n.url === tabDesc.url;
+                project.links.forEach(function(link) {
+                  link.bookmarked = nodes.findObject(function(n) {
+                    return n.url === link.url;
                   }) !== null;
-                  tabDesc.active = true;
+                  link.active = true;
                 });
                 nodes.forEach(function(node) {
-                  if (!my.isProjectPageUrl(node.url) && !project.tabDescs.findObject(function(td) {
+                  if (!my.isProjectPageUrl(node.url) && !project.links.findObject(function(td) {
                     return td.url === node.url;
                   })) {
-                    var newTabDesc = {
+                    var newlink = {
                       title: node.title,
                       url: node.url,
                       favIconUrl: node.favIconUrl,
@@ -364,7 +376,7 @@ define(
                       bookmarked: true,
                       active: false
                     };
-                    project.tabDescs.push(newTabDesc);
+                    project.links.push(newlink);
                   }
                 });
                 callback(project);
@@ -374,6 +386,6 @@ define(
         });
       });
     };
-
+*/
     return my;
   });
