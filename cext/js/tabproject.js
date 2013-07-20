@@ -125,6 +125,62 @@ define(
       });
     };
 
+    my.getProjectsFromDBAndTabs = function(callback) {
+      my.listDBProjects(function(projects) {
+        ichrome.tabs.query({}, function(tabs) {
+          var nullProject = {
+            name: "(Unallocated)",
+            tabDescs: []
+          };
+          var curProject = nullProject;
+          projects.unshift(nullProject);
+          tabs.forEach(function(tab) {
+            console.log('TAB index=' + tab.index + ', title=' + tab.title);
+            if (tab.index === 0) {
+              curProject = nullProject;
+            }
+            if (my.isProjectPageUrl(tab.url)) {
+              var projectName = utils.getParameterByName(tab.url, 'name');
+              curProject = projects.findObject(function(p) {
+                p.name = projectName;
+              });
+              if (curProject === null) {
+                curProject = {
+                  name: projectName,
+                  url: tab.url,
+                  tabId: tab.id,
+                  tabIndex: tab.index,
+                  tabWindowId: tab.windowId,
+                  autosave: !! utils.getParameterByName(tab.url, 'as'),
+                  autoopen: !! utils.getParameterByName(tab.url, 'ao'),
+                  tabDescs: []
+                };
+                projects.push(curProject);
+              }
+              console.log('FirstProjectTab', curProject);
+            } else if (tab.url == my.StopPageUrl) {
+              curProject = nullProject;
+            } else {
+              var tabDesc = {
+                title: tab.title,
+                url: tab.url,
+                favIconUrl: tab.favIconUrl,
+                id: tab.id,
+                index: tab.index
+              };
+              curProject.tabDescs.push(tabDesc);
+              console.log('ProjectTab', tabDesc);
+            }
+          });
+          if (nullProject.tabDescs.length === 0) {
+            projects.shift();
+          }
+          console.log('Finished getProjectsFromDBAndTabs', projects);
+          callback(projects);
+        });
+      });
+    };
+
     my.updateProjectHashParamInDB = function(name, param, value, callback) {
       my.getProjectFromDB(name, function(project) {
         if (project === null) {

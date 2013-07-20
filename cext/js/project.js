@@ -76,8 +76,18 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
    displayProjectSettings(project);
   }
 
-  $(document).ready(function(){
+  function refresh() {
     tp.lookupProjectContent(projectName, displayProjectContent);
+  }
+
+  $(document).ready(function(){
+    refresh();
+
+    chrome.tabs.onActivated.addListener( function(info) {
+      if (info.tabId === project.tabId && info.windowId === project.windowId) {
+        refresh();
+      }
+    });
   });
 
   $('input:checkbox').on('click', function(event) {

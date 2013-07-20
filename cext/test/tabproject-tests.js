@@ -53,11 +53,60 @@ define(['utils', 'ichrome', 'tabproject'], function(utils, ichrome, tp) {
       });
     });
 
-    it("Can merge a project's info from tabs and bookmarks", function() {
+    it("Can merge a single project's info from tabs and bookmarks", function() {
       ichrome.reset();
 
       tp.lookupProjectContent('Project1', function(project) {
         console.log('Got project', project);
+        expect(project.name).toBe('Project1');
+        expect(project.url).toBe('chrome-extension://abcd/project.html?name=Project1');
+        expect(project.autosave).toBe(false);
+        expect(project.autoopen).toBe(false);
+        expect(project.tabDescs.length).toBe(3);
+        expect(project.tabDescs[0].title).toBe('Some Page');
+        expect(project.tabDescs[0].active).toBe(true);
+        expect(project.tabDescs[0].bookmarked).toBe(true);
+        expect(project.tabDescs[1].url).toBe('http://unsaved.com');
+        expect(project.tabDescs[1].active).toBe(true);
+        expect(project.tabDescs[1].bookmarked).toBe(false);
+        expect(project.tabDescs[2].title).toBe('Some Page#2');
+        expect(project.tabDescs[2].active).toBe(false);
+        expect(project.tabDescs[2].bookmarked).toBe(true);
+      });
+    });
+
+    it("Can merge all projects from tabs and bookmarks", function() {
+      ichrome.reset();
+
+      tp.getProjectsFromDBAndTabs(function(projects) {
+        console.log('Got projects', projects);
+        expect(projects.length).toBe(3);
+        expect(projects[0].name).toBe("Project1");
+        expect(projects[0].autosave).toBe(false);
+        expect(projects[0].autoopen).toBe(false);
+        expect(projects[0].tabDescs.length).toBe(2);
+        expect(projects[0].tabDescs[0].title).toBe('Some Page');
+        expect(projects[0].tabDescs[1].url).toBe('http://somewhere.com/2');
+        expect(projects[1].name).toBe("Project2");
+        expect(projects[1].autosave).toBe(false);
+        expect(projects[1].autoopen).toBe(true);
+        expect(projects[0].tabDescs.length).toBe(1);
+        expect(projects[0].tabDescs[0].title).toBe('Some Other Page');
+        expect(projects[2].name).toBe("Project51");
+        expect(projects[2].autosave).toBe(true);
+        expect(projects[2].autoopen).toBe(false);
+        expect(projects[2].tabDescs.length).toBe(1);
+        expect(projects[2].tabDescs[0].title).toBe('Funnyville');
+
+        expect(projects.length).toBe(2);
+        expect(projects[0].name).toBe("Project1");
+        expect(projects[0].autosave).toBe(false);
+        expect(projects[0].autoopen).toBe(false);
+        expect(projects[0].tabDescs.length).toBe(2);
+        expect(projects[0].tabDescs[0].title).toBe('Some Page');
+        expect(projects[0].tabDescs[1].url).toBe('http://unsaved.com');
+
+
         expect(project.name).toBe('Project1');
         expect(project.url).toBe('chrome-extension://abcd/project.html?name=Project1');
         expect(project.autosave).toBe(false);

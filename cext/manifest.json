@@ -11,6 +11,8 @@
     "128": "img/icon128.png"
   },
 
+  "key": "ehdakhkaboaaifelbcaaiaadfihlonia",
+
   "permissions": [
     "tabs", "bookmarks", "storage"
   ],
