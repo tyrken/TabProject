@@ -94,6 +94,23 @@ define(
                   }
                 }
                 project.storedBookmarks = nodes;
+                project.tabDescs = [];
+                nodes.forEach(function(node) {
+                  if (!my.isProjectPageUrl(node.url) && !project.tabDescs.findObject(function(td) {
+                    return td.url === node.url;
+                  })) {
+                    var newTabDesc = {
+                      title: node.title,
+                      url: node.url,
+                      favIconUrl: node.favIconUrl,
+                      bookmarkId: node.id,
+                      parentBookmarkId: node.parentId,
+                      bookmarked: true,
+                      active: false
+                    };
+                    project.tabDescs.push(newTabDesc);
+                  }
+                });
                 return callback(project, --counter);
               });
             });
@@ -142,7 +159,7 @@ define(
             if (my.isProjectPageUrl(tab.url)) {
               var projectName = utils.getParameterByName(tab.url, 'name');
               curProject = projects.findObject(function(p) {
-                p.name = projectName;
+                return p.name === projectName;
               });
               if (curProject === null) {
                 curProject = {
