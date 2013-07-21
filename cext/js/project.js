@@ -1,154 +1,217 @@
 requirejs.config({
-  //appDir: ".",
-  baseUrl: "..",
-  paths: {
-    'jquery': ['lib/jquery'],
-    'bootstrap': ['lib/bootstrap'],
-    'tabproject': ['js/tabproject'],
-    'jasmine': ['lib/jasmine-1.3.1/jasmine'],
-    'jasmine-html': ['lib/jasmine-1.3.1/jasmine-html'],
-    'jasmine-gui': ['test/jasmine-gui'],
-    'utils': ['js/utils'],
-    'ichrome': ['js/ichrome']
-  },
-  shim: {
-    /* Set bootstrap dependencies (just jQuery) */
-    'bootstrap': ['jquery']
-  }
+    //appDir: ".",
+    baseUrl: "..",
+    paths: {
+        'jquery': ['lib/jquery'],
+        'bootstrap': ['lib/bootstrap'],
+        'tabproject': ['js/tabproject'],
+        'jasmine': ['lib/jasmine-1.3.1/jasmine'],
+        'jasmine-html': ['lib/jasmine-1.3.1/jasmine-html'],
+        'jasmine-gui': ['test/jasmine-gui'],
+        'utils': ['js/utils'],
+        'ichrome': ['js/ichrome']
+    },
+    shim: {
+        /* Set bootstrap dependencies (just jQuery) */
+        'bootstrap': ['jquery']
+    }
 });
 
 require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, tp, utils) {
-  "use strict";
+    "use strict";
 
-  console.log("Loaded project via require");
+    console.log("Loaded project via require");
 
-  var projectName = utils.getParameterByName(window.location.search, 'name');
+    var project = null;
+    var projectName = utils.getParameterByName(window.location.search, 'name');
 
-  function displayProjectSettings(project) {
-    $('#autosave').prop('checked', project.autosave);
-    $('#autoopen').prop('checked', project.autoopen);
-    $('#saveAll').prop('enabled', !project.autosave);
-    document.title = project.name;
-    $('#projectName').text(project.name);
-    window.history.replaceState({}, project.name, project.url);
-  }
-
-  function displayProjectContent(project) {
-    var items = ['<ul class="projectContent clearfix">'];
-    project.links.forEach(function(link) {
-      var iconClass = link.bookmarked ? 'icon-star' : 'icon-star-empty';
-      var activityClass = link.active ? 'active' : 'inactive';
-
-      items.push('<li><i class="'+iconClass+'"></i> <a href="' + link.url + '" class="'+activityClass+'">' + link.title + '</a></li>');
-    });
-    if (project.links.length === 0) {
-      items.push('<li>No project content yet!</li>');
+    function displayProjectSettings(project) {
+        $('#autosave').prop('checked', project.autosave);
+        $('#autoopen').prop('checked', project.autoopen);
+        $('#saveAll').prop('enabled', !project.autosave);
+        document.title = project.name.escapeForHtml();
+        $('#projectName').text(project.name);
+        window.history.replaceState({}, project.name, project.url);
     }
-    items.push('</ul>');
-    $('#projectContent').html(items.join(''));
 
-    $('i[class="icon-star-empty"]').on('click', function(event) {
-      var icon = $(this);
-      var link = icon.next();
-      //console.log('icon-click', link);
-      tp.saveBookmark(project, link.attr('href'), link.text(), function(node) {
-        icon.attr('class', 'icon-star');
-      });
-    });
-
-    $('a[class="inactive"]').on('click', function(event) {
-      event.preventDefault();
-      var anchor = $(this);
-      chrome.tabs.create({
-        url: $(this).attr('href'),
-        windowId: project.tabWindowId,
-        index: project.tabIndex+1,
-        openerTabId: project.tabId,
-        active: false
-      }, function(tab) {
-        var li = anchor.parent();
-        li.parent().prepend(li);
-        anchor.attr('class', 'active');
-        //tp.lookupProjectContent(projectName, displayProjectContent);
-      });
-    });
-
-   displayProjectSettings(project);
-  }
-
-  function refresh() {
-    tp.lookupProjectContent(projectName, displayProjectContent);
-  }
-
-  $(document).ready(function(){
-    refresh();
-
-    chrome.tabs.onActivated.addListener( function(info) {
-      if (info.tabId === project.tabId && info.windowId === project.windowId) {
-        refresh();
-      }
-    });
-  });
-
-  $('input:checkbox').on('click', function(event) {
-    var param = $(this).attr('id') === 'autosave' ? 'as' : 'ao';
-    var newValue = $(this).is(':checked');
-    tp.updateProjectHashParamInDB(projectName, param, newValue, function(project) {
-      displayProjectSettings(project);
-    });
-  });
-
-  $('#openAll').on('click', function(event) {
-    tp.lookupProjectContent(projectName, function(project) {
-      var lastIndex = project.tabIndex;
-      project.links.forEach(function(link) {
-        if (!link.active) {
-          chrome.tabs.create({
-            url: link.url,
-            windowId: project.tabWindowId,
-            index: ++lastIndex,
-            openerTabId: project.tabId
-          });
-        } else {
-          lastIndex = link.tabIndex;
-        }
-      });
-    });
-  });
-
-  $('#saveAll').on('click', function(event) {
-    tp.makeBookmarks(projectName, function() {
-      tp.lookupProjectContent(projectName, function(project) {
-        displayProjectContent(project);
-        alert("Saved " + projectName);
-      });
-    });
-  });
-
-  $('#close').on('click', function(event) {
-    tp.lookupProjectContent(projectName, function(project) {
-      var unsaved = [];
-      project.links.forEach(function(link) {
-        if (link.active && !link.bookmarked) {
-          unsaved.push(link);
-        }
-      });
-      var answer = true;
-      if (unsaved.length > 0) {
-        displayProjectContent(project);
-        this.answer = confirm(unsaved.length + " unsaved content in " + projectName + " project, continue to close project?");
-      }
-      if (answer === true) {
-        console.log("Closing project " + projectName);
-        var tabIds = [project.tabId];
-        project.links.forEach(function(link) {
-          if (link.active && link.tabId >= 1) {
-            tabIds.push(link.tabId);
-          }
+    function createProjectSubwindow(project, anchor) {
+        var url = anchor.attr('href');
+        var link = project.links.findObject(function(l) {
+            return l.url === url;
         });
-        chrome.tabs.remove(tabIds);
-      }
-    }, projectName);
-  });
+        if (link) {
+            chrome.tabs.create({
+                    url: link.url,
+                    windowId: project.tabWindowId,
+                    index: project.tabIndex + 1,
+                    openerTabId: project.tabId,
+                    active: false
+                },
+                function(tab) {
+                    anchor.attr('class', 'active');
+                    link.active = true;
+                });
+        }
+
+    }
+
+    function displayProjects(projects) {
+        project = projects.findObject(function(p) {
+            return p.name === projectName;
+        });
+
+        // TODO: Learn mustache!
+        var newHtml = ['<div class="row-fluid"><div class="span6"><ul class="projectContent clearfix">'];
+
+        function appendLinkHTML(link) {
+            var iconClass = link.bookmarked ? 'icon-star' : 'icon-star-empty';
+            var activityClass = link.active ? 'active' : 'inactive';
+            newHtml.push('<li><i class="' + iconClass + '"></i> <a href="' + link.url + '" class="' + activityClass + '">' + link.title.escapeForHtml() + '</a></li>');
+        }
+        project.links.forEach(appendLinkHTML);
+        if (project.links.length === 0) {
+            newHtml.push('<li>No project content yet!</li>');
+        }
+        newHtml.push('</ul></div><div class="span6"><div class="accordion" id="otherProjects">');
+
+        for (var i = 0; i < projects.length; i++) {
+            if (projects[i] !== project) {
+                var localLink = "collapse" + i;
+                newHtml.push('<div class="accordion-group"><div class="accordion-heading"><a class="accordion-toggle" data-toggle="collapse" data-parent="#otherProjects" href="#' + localLink + '">' + projects[i].name.escapeForHtml() + '</a></div><div id="' + localLink + '" class="accordion-body collapse"><div class="accordion-inner"><ul class="projectContent clearfix">');
+                projects[i].links.forEach(appendLinkHTML);
+                newHtml.push('</ul></div></div></div>');
+            }
+        }
+        newHtml.push('</div></div></div>');
+        $('#projectContent').html(newHtml.join(''));
+
+        $('i[class="icon-star-empty"]').on('click', function(event) {
+            var icon = $(this);
+            var link = icon.next();
+            //console.log('icon-click', link);
+            tp.saveBookmark(project, link.attr('href'), link.text(), function(node) {
+                icon.attr('class', 'icon-star');
+            });
+        });
+
+        $('a[class="inactive"]').on('click', function(event) {
+            event.preventDefault();
+
+            var anchor = $(this);
+            if (!anchor.hasClass('inactive')) {
+                return;
+            }
+            var targetProject = project;
+            var accordianHeader = anchor.parents('.accordion-group');
+            console.log("got", accordianHeader);
+
+            if (accordianHeader.length) {
+                var clickedProjectName = $(accordianHeader).find(".accordion-toggle").text();
+                console.log("Click other one", clickedProjectName);
+                targetProject = projects.findObject(function(p) {
+                    return p.name === clickedProjectName;
+                });
+                if (targetProject === null) {
+                    console.log('Could not find project', clickedProjectName);
+                }
+                if (!targetProject.tabId) {
+                    chrome.tabs.create({
+                        url: targetProject.url,
+                        index: 999,
+                        active: false
+                    }, function(tab) {
+                        targetProject.tabId = tab.id;
+                        targetProject.tabWindowId = tab.windowId;
+                        targetProject.tabIndex = tab.index;
+
+                        createProjectSubwindow(targetProject, anchor);
+                    });
+                    return;
+                }
+            }
+
+            createProjectSubwindow(targetProject, anchor);
+        });
+
+        displayProjectSettings(project);
+    }
+
+    function refresh() {
+        tp.getProjectsFromDBAndTabs(displayProjects);
+    }
+
+    $(document).ready(function() {
+        refresh();
+
+        chrome.tabs.onActivated.addListener(function(info) {
+            console.log("onActivated with", info);
+            console.log("onActivated with project", project);
+            if (project !== null && info.tabId === project.tabId && info.windowId === project.tabWindowId) {
+                console.log("Refreshing due to", info);
+                refresh();
+            }
+        });
+    });
+
+    $('input:checkbox').on('click', function(event) {
+        var param = $(this).attr('id') === 'autosave' ? 'as' : 'ao';
+        var newValue = $(this).is(':checked');
+        tp.updateProjectHashParamInDB(projectName, param, newValue, function(project) {
+            displayProjectSettings(project);
+        });
+    });
+
+    $('#openAll').on('click', function(event) {
+        tp.lookupProjectContent(projectName, function(project) {
+            var lastIndex = project.tabIndex;
+            project.links.forEach(function(link) {
+                if (!link.active) {
+                    chrome.tabs.create({
+                        url: link.url,
+                        windowId: project.tabWindowId,
+                        index: ++lastIndex,
+                        openerTabId: project.tabId
+                    });
+                } else {
+                    lastIndex = link.tabIndex;
+                }
+            });
+        });
+    });
+
+    $('#saveAll').on('click', function(event) {
+        tp.makeBookmarks(projectName, function() {
+            tp.lookupProjectContent(projectName, function(project) {
+                displayProjectContent(project);
+                alert("Saved " + projectName);
+            });
+        });
+    });
+
+    $('#close').on('click', function(event) {
+        tp.lookupProjectContent(projectName, function(project) {
+            var unsaved = [];
+            project.links.forEach(function(link) {
+                if (link.active && !link.bookmarked) {
+                    unsaved.push(link);
+                }
+            });
+            var answer = true;
+            if (unsaved.length > 0) {
+                displayProjectContent(project);
+                this.answer = confirm(unsaved.length + " unsaved content in " + projectName + " project, continue to close project?");
+            }
+            if (answer === true) {
+                console.log("Closing project " + projectName);
+                var tabIds = [project.tabId];
+                project.links.forEach(function(link) {
+                    if (link.active && link.tabId >= 1) {
+                        tabIds.push(link.tabId);
+                    }
+                });
+                chrome.tabs.remove(tabIds);
+            }
+        }, projectName);
+    });
 
 });

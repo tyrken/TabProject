@@ -38,6 +38,12 @@ define(["utils"], function(utils) {
       expect(utils.isBlank(null)).toBe(true);
     });
 
+    it("escapeForHtml works", function() {
+      expect(utils.escapeForHtml('fds')).toBe('fds');
+      expect(utils.escapeForHtml('fd&s')).toBe('fd&amp;s');
+      expect(utils.escapeForHtml('')).toBe('');
+    });
+
     it("findObject works", function() {
       var objs = ['s', 'd', 'v'];
       expect(utils.findObject(objs, function(s) {
@@ -59,6 +65,7 @@ define(["utils"], function(utils) {
       expect(objs2.length).toBe(4);
       expect('fds'.isBlank()).toBe(false);
       expect('myinput'.startsWith('my')).toBe(true);
+      expect('fd<s'.escapeForHtml()).toBe('fd&lt;s');
     });
 
     it("CountDownLatch works", function() {
