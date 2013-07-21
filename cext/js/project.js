@@ -34,11 +34,35 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
         window.history.replaceState({}, project.name, project.url);
     }
 
-    function createProjectSubwindow(project, anchor) {
+    function findLinkInProject(anchor) {
         var url = anchor.attr('href');
         var link = project.links.findObject(function(l) {
             return l.url === url;
         });
+        return link;
+    }
+
+    function findContainingProject(anchor) {
+        var targetProject = project;
+
+        var accordianHeader = anchor.parents('.accordion-group');
+        console.log("got", accordianHeader);
+
+        if (accordianHeader.length) {
+            var clickedProjectName = $(accordianHeader).find(".accordion-toggle").text();
+            console.log("Click other one", clickedProjectName);
+            targetProject = projects.findObject(function(p) {
+                return p.name === clickedProjectName;
+            });
+            if (targetProject === null) {
+                console.log('Could not find project', clickedProjectName);
+            }
+        }
+        return targetProject;
+    }
+
+    function createProjectSubwindow(project, anchor) {
+        var link = findLinkInProject(project);
         if (link) {
             chrome.tabs.create({
                     url: link.url,
@@ -50,6 +74,9 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
                 function(tab) {
                     anchor.attr('class', 'active');
                     link.active = true;
+                    link.tabId = tab.id;
+                    link.tabIndex = tab.index;
+                    link.tabWindowId = tab.windowId;
                 });
         }
 
@@ -94,6 +121,7 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
             });
         });
 
+        // TODO: Consider binding to upper element with filtering?
         $('a[class="inactive"]').on('click', function(event) {
             event.preventDefault();
 
@@ -101,36 +129,34 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
             if (!anchor.hasClass('inactive')) {
                 return;
             }
-            var targetProject = project;
-            var accordianHeader = anchor.parents('.accordion-group');
-            console.log("got", accordianHeader);
+            var targetProject = findContainingProject(anchor);
 
-            if (accordianHeader.length) {
-                var clickedProjectName = $(accordianHeader).find(".accordion-toggle").text();
-                console.log("Click other one", clickedProjectName);
-                targetProject = projects.findObject(function(p) {
-                    return p.name === clickedProjectName;
+            if (!targetProject.tabId) {
+                chrome.tabs.create({
+                    url: targetProject.url,
+                    index: 999,
+                    active: false
+                }, function(tab) {
+                    targetProject.tabId = tab.id;
+                    targetProject.tabWindowId = tab.windowId;
+                    targetProject.tabIndex = tab.index;
+
+                    createProjectSubwindow(targetProject, anchor);
                 });
-                if (targetProject === null) {
-                    console.log('Could not find project', clickedProjectName);
-                }
-                if (!targetProject.tabId) {
-                    chrome.tabs.create({
-                        url: targetProject.url,
-                        index: 999,
-                        active: false
-                    }, function(tab) {
-                        targetProject.tabId = tab.id;
-                        targetProject.tabWindowId = tab.windowId;
-                        targetProject.tabIndex = tab.index;
-
-                        createProjectSubwindow(targetProject, anchor);
-                    });
-                    return;
-                }
+            } else {
+                createProjectSubwindow(targetProject, anchor);
             }
+        });
 
-            createProjectSubwindow(targetProject, anchor);
+        $('a').on('dblclick', function(event) {
+            var anchor = $(this);
+            var targetProject = findContainingProject(anchor);
+            var link = findLinkInProject(project);
+            if (link.tabId) {
+                chrome.tabs.update(link.tabId, {
+                    active: true
+                });
+            }
         });
 
         displayProjectSettings(project);
