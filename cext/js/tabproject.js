@@ -109,7 +109,8 @@ define(
                                             url: node.url,
                                             favIconUrl: node.favIconUrl,
                                             bookmarkId: node.id,
-                                            parentBookmarkId: node.parentId,
+                                            bookmarkIndex: node.index,
+                                            bookmarkParentId: node.parentId,
                                             bookmarked: true,
                                             active: false
                                         };
@@ -376,7 +377,7 @@ define(
                       url: node.url,
                       favIconUrl: node.favIconUrl,
                       bookmarkId: node.id,
-                      parentBookmarkId: node.parentId,
+                      bookmarkParentId: node.parentId,
                       bookmarked: true,
                       active: false
                     };

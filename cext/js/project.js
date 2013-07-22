@@ -25,32 +25,38 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
     var project = null;
     var projectName = utils.getParameterByName(window.location.search, 'name');
 
-    function displayProjectSettings(project) {
-        $('#autosave').prop('checked', project.autosave);
-        $('#autoopen').prop('checked', project.autoopen);
-        $('#saveAll').prop('enabled', !project.autosave);
-        document.title = project.name.escapeForHtml();
-        $('#projectName').text(project.name);
-        window.history.replaceState({}, project.name, project.url);
+    var draggedProject = null;
+    var draggedLink = null;
+
+    function displayProjectSettings(proj) {
+        $('#autosave').prop('checked', proj.autosave);
+        $('#autoopen').prop('checked', proj.autoopen);
+        $('#saveAll').prop('enabled', !proj.autosave);
+        document.title = proj.name.escapeForHtml();
+        $('#projectName').text(proj.name);
+        window.history.replaceState({}, proj.name, proj.url);
     }
 
-    function findLinkInProject(anchor) {
+    function findLinkInProject(proj, anchor) {
         var url = anchor.attr('href');
-        var link = project.links.findObject(function(l) {
+        var link = proj.links.findObject(function(l) {
             return l.url === url;
         });
         return link;
     }
 
-    function findContainingProject(anchor) {
+    function findContainingProject(element) {
         var targetProject = project;
+        var clickedProjectName = null;
 
-        var accordianHeader = anchor.parents('.accordion-group');
-        console.log("got", accordianHeader);
-
+        var accordianHeader = element.parents('.accordion-group');
         if (accordianHeader.length) {
-            var clickedProjectName = $(accordianHeader).find(".accordion-toggle").text();
-            console.log("Click other one", clickedProjectName);
+            clickedProjectName = $(accordianHeader).find('.accordion-toggle').text();
+        } else if (element.hasClass('accordion-group')) {
+            clickedProjectName = element.find('.accordion-toggle').text();
+        }
+
+        if (clickedProjectName !== null) {
             targetProject = projects.findObject(function(p) {
                 return p.name === clickedProjectName;
             });
@@ -58,11 +64,12 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
                 console.log('Could not find project', clickedProjectName);
             }
         }
+
         return targetProject;
     }
 
     function createProjectSubwindow(project, anchor) {
-        var link = findLinkInProject(project);
+        var link = findLinkInProject(project, anchor);
         if (link) {
             chrome.tabs.create({
                     url: link.url,
@@ -122,13 +129,14 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
         });
 
         // TODO: Consider binding to upper element with filtering?
-        $('a[class="inactive"]').on('click', function(event) {
+        //        $('a[class="inactive"]').on('click', function(event) {
+        $('#projectContent').on('click', 'a .inactive', function(event) {
             event.preventDefault();
 
             var anchor = $(this);
-            if (!anchor.hasClass('inactive')) {
+            /*            if (!anchor.hasClass('inactive')) {
                 return;
-            }
+            } */
             var targetProject = findContainingProject(anchor);
 
             if (!targetProject.tabId) {
@@ -146,23 +154,92 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
             } else {
                 createProjectSubwindow(targetProject, anchor);
             }
-        });
+        })
 
-        $('a').on('dblclick', function(event) {
+        //        $('a').on('dblclick', function(event) {
+        .on('dblclick', 'a', function(event) {
             var anchor = $(this);
             var targetProject = findContainingProject(anchor);
-            var link = findLinkInProject(project);
+            var link = findLinkInProject(targetProject, anchor);
             if (link.tabId) {
                 chrome.tabs.update(link.tabId, {
                     active: true
                 });
             }
+        }).on('dragstart', 'a', function(event) {
+            var anchor = $(this);
+            draggedProject = findContainingProject(anchor);
+            draggedLink = findLinkInProject(draggedProject, anchor);
+
+            event.dataTransfer.effectAllowed = 'move';
+            event.dataTransfer.setData('text/html', anchor.href);
+        }).on('dragover', function(event) {
+            event.preventDefault();
+        }).on('drop', '.accordion-group, a', function(event) {
+            event.preventDefault();
+            var element = $(this);
+            var targetProject = findContainingProject(element);
+            var link = null;
+            var destFolderId = targetProject.folderBookmarkId;
+            var destBookmarkIndex = 0;
+            if (!element.hasClass('accordion-group')) {
+                link = findLinkInProject(targetProject, element);
+                destFolderId = link.bookmarkParentId;
+                destBookmarkIndex = link.bookmarkIndex;
+            }
+
+            var tidyDraggedTab = function(node) {
+                draggedLink.bookmarkId = node.id;
+                draggedLink.bookmarkIndex = node.index;
+                draggedLink.bookmarkParentId = node.parentId;
+                draggedLink.bookmarked = true;
+
+                if (draggedLink.tabId) {
+                    if (targetProject.tabWindowId) {
+                        chrome.tabs.move(draggedLink.tabId, {
+                            windowId: targetProject.tabWindowId,
+                            index: targetProject.tabIndex + 1
+                        }, function(tab) {
+                            draggedLink.tabId = tab.id;
+                            draggedLink.tabIndex = tab.index;
+                            draggedLink.tabWindowId = tab.windowId;
+                        });
+                    } else {
+                        chrome.tabs.remove(draggedLink.tabId);
+                        draggedLink.active = false;
+                        delete draggedLink.tabId;
+                        delete draggedLink.tabIndex;
+                        delete draggedLink.tabWindowId;
+                    }
+                }
+
+                draggedProject = draggedLink = null;
+            };
+
+            if (draggedLink.bookmarkId) {
+                chrome.bookmarks.move(draggedLink.bookmarkId, {
+                    parentId: destFolderId,
+                    index: destBookmarkIndex
+                }, tidyDraggedTab);
+            } else {
+                chrome.bookmarks.create({
+                    parentId: destFolderId,
+                    index: destBookmarkIndex,
+                    title: link.title,
+                    url: link.url
+                }, tidyDraggedTab);
+            }
+
+        }).on('dragend', function(event) {
+            draggedProject = draggedLink = null;
+            // remove any border drop-highlights
         });
 
         displayProjectSettings(project);
     }
 
     function refresh() {
+        // TODO: Remember state of accordian
         tp.getProjectsFromDBAndTabs(displayProjects);
     }
 
