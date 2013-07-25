@@ -1,5 +1,5 @@
 define(
-    ["jquery", "utils", "ichrome"], function($, utils, ichrome) {
+    ['jquery', 'js/utils', 'ichrome', 'js/Project', 'js/Link'], function($, utils, ichrome, Project, Link) {
         "use strict";
 
         var bookmarkBarId = '1';
@@ -15,17 +15,6 @@ define(
             return ichrome.bookmarks.MAX_SUSTAINED_WRITE_OPERATIONS_PER_MINUTE;
         };
 
-        my.StopPageUrl = 'chrome-extension://' + ichrome.i18n.getMessage("@@extension_id") + '/stop.html';
-        my.ProjectPageBase = 'chrome-extension://' + ichrome.i18n.getMessage("@@extension_id") + '/project.html?name=';
-
-        my.getProjectPageUrl = function(name) {
-            return my.ProjectPageBase + encodeURIComponent(name);
-        };
-
-        my.isProjectPageUrl = function(url) {
-            return utils.startsWith(url, my.ProjectPageBase);
-        };
-
         my.scanTabsForProjects = function(callback) {
             console.log('Starting scanTabs');
             ichrome.tabs.query({}, function(tabs) {
@@ -36,30 +25,16 @@ define(
                     if (tab.index === 0) {
                         curProject = null;
                     }
-                    if (my.isProjectPageUrl(tab.url)) {
-                        curProject = {
-                            name: utils.getParameterByName(tab.url, 'name'),
-                            url: tab.url,
-                            tabId: tab.id,
-                            tabIndex: tab.index,
-                            tabWindowId: tab.windowId,
-                            autosave: !! utils.getParameterByName(tab.url, 'as'),
-                            autoopen: !! utils.getParameterByName(tab.url, 'ao'),
-                            links: []
-                        };
+                    if (Project.isProjectPageUrl(tab.url)) {
+                        curProject = new Project();
+                        curProject.setFromTab(tab);
                         projects.push(curProject);
                         console.log('FirstProjectTab', curProject);
-                    } else if (tab.url == my.StopPageUrl) {
+                    } else if (tab.url == Project.StopPageUrl) {
                         curProject = null;
                     } else if (curProject !== null) {
-                        var link = {
-                            title: tab.title,
-                            url: tab.url,
-                            favIconUrl: tab.favIconUrl,
-                            tabId: tab.id,
-                            tabIndex: tab.index,
-                            tabWindowId: tab.windowId
-                        };
+                        var link = new Link();
+                        link.setFromTab(tab);
                         curProject.links.push(link);
                         console.log('ProjectTab', link);
                     }
@@ -78,42 +53,24 @@ define(
                     ichrome.bookmarks.getChildren(baseNode.id, function(projectParentNodes) {
                         var counter = projectParentNodes.length;
                         projectParentNodes.forEach(function(projectParentNode) {
-                            var project = {
-                                name: projectParentNode.title,
-                                folderBookmarkId: projectParentNode.id,
-                                url: my.getProjectPageUrl(projectParentNode.title),
-                                autosave: false,
-                                autoopen: false
-                            };
+                            var project = new Project();
+                            project.setFromFolderBookmark(projectParentNode);
                             ichrome.bookmarks.getChildren(projectParentNode.id, function(nodes) {
                                 for (var i = 0, j = nodes.length; i < j; ++i) {
                                     var n = nodes[i];
-                                    if (my.isProjectPageUrl(n.url)) {
-                                        project.bookmarkId = n.id;
-                                        project.url = n.url;
-                                        project.name = utils.getParameterByName(n.url, 'name');
-                                        project.autosave = !! utils.getParameterByName(n.url, 'as');
-                                        project.autoopen = !! utils.getParameterByName(n.url, 'ao');
+                                    if (Project.isProjectPageUrl(n.url)) {
+                                        project.setFromBookmark(n);
                                         nodes.splice(i, 1);
                                         break;
                                     }
                                 }
                                 project.storedBookmarks = nodes;
-                                project.links = [];
                                 nodes.forEach(function(node) {
-                                    if (!my.isProjectPageUrl(node.url) && !project.links.findObject(function(td) {
+                                    if (!Project.isProjectPageUrl(node.url) && !project.links.findObject(function(td) {
                                         return td.url === node.url;
                                     })) {
-                                        var newLink = {
-                                            title: node.title,
-                                            url: node.url,
-                                            favIconUrl: node.favIconUrl,
-                                            bookmarkId: node.id,
-                                            bookmarkIndex: node.index,
-                                            bookmarkParentId: node.parentId,
-                                            bookmarked: true,
-                                            active: false
-                                        };
+                                        var newLink = new Link();
+                                        newLink.setFromBookmark(node);
                                         project.links.push(newLink);
                                     }
                                 });
@@ -151,12 +108,8 @@ define(
         my.getProjectsFromDBAndTabs = function(callback) {
             my.listDBProjects(function(projects) {
                 ichrome.tabs.query({}, function(tabs) {
-                    var nullProject = {
-                        name: "(Unallocated)",
-                        autosave: false,
-                        autoopen: false,
-                        links: []
-                    };
+                    var nullProject = new Project();
+                    nullProject.name = "(Unallocated)";
                     var curProject = nullProject;
                     projects.unshift(nullProject);
                     tabs.forEach(function(tab) {
@@ -164,16 +117,14 @@ define(
                         if (tab.index === 0) {
                             curProject = nullProject;
                         }
-                        if (my.isProjectPageUrl(tab.url)) {
+                        if (Project.isProjectPageUrl(tab.url)) {
                             var projectName = utils.getParameterByName(tab.url, 'name');
                             curProject = projects.findObject(function(p) {
                                 return p.name === projectName;
                             });
                             if (curProject === null) {
-                                curProject = {
-                                    name: projectName,
-                                    links: []
-                                };
+                                curProject = new Project();
+                                curProject.name = projectName;
                                 projects.push(curProject);
                             }
                             curProject.url = tab.url;
@@ -184,7 +135,7 @@ define(
                             curProject.autoopen = !! utils.getParameterByName(tab.url, 'ao');
 
                             console.log('FirstProjectTab', curProject);
-                        } else if (tab.url == my.StopPageUrl) {
+                        } else if (tab.url == Project.StopPageUrl) {
                             curProject = nullProject;
                         } else {
                             var link = curProject.links.findObject(function(l) {
@@ -245,7 +196,7 @@ define(
         function makeProjectBookmarks(project, projectParentNodeId, cdl) {
             console.log("Checking bookmarks for project " + project.name);
             ichrome.bookmarks.getChildren(projectParentNodeId, function(entries) {
-                var projectUrl = my.getProjectPageUrl(project.name);
+                var projectUrl = Project.getProjectPageUrl(project.name);
                 cdl.reserve(project.links.length);
                 if (!entries.findObject(function(entry) {
                     return entry.url === projectUrl;
@@ -369,7 +320,7 @@ define(
                   link.active = true;
                 });
                 nodes.forEach(function(node) {
-                  if (!my.isProjectPageUrl(node.url) && !project.links.findObject(function(td) {
+                  if (!Project.isProjectPageUrl(node.url) && !project.links.findObject(function(td) {
                     return td.url === node.url;
                   })) {
                     var newlink = {

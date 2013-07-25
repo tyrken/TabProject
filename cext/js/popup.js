@@ -8,7 +8,6 @@ requirejs.config({
     'jasmine': ['lib/jasmine-1.3.1/jasmine'],
     'jasmine-html': ['lib/jasmine-1.3.1/jasmine-html'],
     'jasmine-gui': ['test/jasmine-gui'],
-    'utils': ['js/utils'],
     'ichrome': ['js/ichrome']
     },
   shim: {
@@ -17,7 +16,7 @@ requirejs.config({
   }
 });
 
-require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, tp, utils) {
+require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project'], function($, bootstrap, tp, utils, Project) {
   "use strict";
 
   console.log("Loaded popup via require:)");
@@ -30,7 +29,7 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
       alert("You must enter a Project Name first!");
       return;
     }
-    var projectPageUrl = tp.getProjectPageUrl(name);
+    var projectPageUrl = Project.getProjectPageUrl(name);
     chrome.tabs.create({
       url: projectPageUrl
     });
@@ -47,7 +46,7 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
     });
 
     $('#addStopButton').on('click', function(event) {
-      var stopPageUrl = tp.StopPageUrl;
+      var stopPageUrl = Project.StopPageUrl;
       chrome.tabs.create({
         url: stopPageUrl
       });
@@ -65,7 +64,7 @@ require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, t
       $('#projectList').append(items.join(''));
       $('li.clickable').on('click', function() {
         var name = $(this).text();
-        var projectPageUrl = tp.getProjectPageUrl(name);
+        var projectPageUrl = Project.getProjectPageUrl(name);
         chrome.tabs.create({
           url: projectPageUrl
         });

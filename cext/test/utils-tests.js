@@ -1,4 +1,4 @@
-define(["utils"], function(utils) {
+define(["js/utils"], function(utils) {
   describe("utils-tests", function() {
 
     it("getParameterByName works", function() {

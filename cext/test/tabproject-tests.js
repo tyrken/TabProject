@@ -1,11 +1,11 @@
-define(['utils', 'ichrome', 'tabproject'], function(utils, ichrome, tp) {
+define(['js/utils', 'ichrome', 'js/tabproject', 'js/Project', 'js/Link'], function(utils, ichrome, tp, Project, Link) {
   describe("tabproject-tests", function() {
 
-    it("Minor projectUrl functions work", function() {
-      var projectUrl = tp.getProjectPageUrl('fred');
+    it("Project static functions work", function() {
+      var projectUrl = Project.getProjectPageUrl('fred');
       expect(projectUrl).toBe('chrome-extension://abcd/project.html?name=fred');
-      expect(tp.isProjectPageUrl(projectUrl)).toBe(true);
-      expect(tp.isProjectPageUrl('f' + projectUrl)).toBe(false);
+      expect(Project.isProjectPageUrl(projectUrl)).toBe(true);
+      expect(Project.isProjectPageUrl('f' + projectUrl)).toBe(false);
     });
 
     it("Can list projects from bookmarks DB", function() {

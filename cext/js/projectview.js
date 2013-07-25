@@ -8,7 +8,6 @@ requirejs.config({
         'jasmine': ['lib/jasmine-1.3.1/jasmine'],
         'jasmine-html': ['lib/jasmine-1.3.1/jasmine-html'],
         'jasmine-gui': ['test/jasmine-gui'],
-        'utils': ['js/utils'],
         'ichrome': ['js/ichrome']
     },
     shim: {
@@ -17,7 +16,7 @@ requirejs.config({
     }
 });
 
-require(['jquery', 'bootstrap', 'tabproject', 'utils'], function($, bootstrap, tp, utils) {
+require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/Link'], function($, bootstrap, tp, utils, Project, Link) {
     "use strict";
 
     console.log("Loaded project via require");

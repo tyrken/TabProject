@@ -6,12 +6,8 @@ require.config({
     jquery: 'lib/jquery',
     jasmine: 'lib/jasmine-1.3.1/jasmine',
     'jasmine-html': 'lib/jasmine-1.3.1/jasmine-html',
-    'ichrome': ['test/ichrome'],
-    'bootstrap': ['lib/bootstrap'],
-    'tabproject': ['js/tabproject'],
-    'utils': ['js/utils'],
-    'popup': ['js/popup'],
-    'project': ['js/project'],
+    ichrome: ['test/ichrome'],
+    bootstrap: ['lib/bootstrap']
   },
   shim: {
     jasmine: {
