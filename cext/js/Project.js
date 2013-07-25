@@ -1,11 +1,11 @@
 define(['js/Link', 'js/utils', 'ichrome'], function(Link, utils, ichrome) {
     "use strict";
 
-    function Project() {
+    function Project(name) {
         if (!(this instanceof Project)) {
             throw new TypeError("Project constructor cannot be called as a function.");
         }
-        this.name = null;
+        this.name = name;
         this.url = null;
         this.tabId = 0;
         this.tabIndex = 0;

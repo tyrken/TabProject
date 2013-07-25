@@ -108,8 +108,7 @@ define(
         my.getProjectsFromDBAndTabs = function(callback) {
             my.listDBProjects(function(projects) {
                 ichrome.tabs.query({}, function(tabs) {
-                    var nullProject = new Project();
-                    nullProject.name = "(Unallocated)";
+                    var nullProject = new Project('(Unallocated)');
                     var curProject = nullProject;
                     projects.unshift(nullProject);
                     tabs.forEach(function(tab) {
@@ -123,16 +122,10 @@ define(
                                 return p.name === projectName;
                             });
                             if (curProject === null) {
-                                curProject = new Project();
-                                curProject.name = projectName;
+                                curProject = new Project(projectName);
                                 projects.push(curProject);
                             }
-                            curProject.url = tab.url;
-                            curProject.tabId = tab.id;
-                            curProject.tabIndex = tab.index;
-                            curProject.tabWindowId = tab.windowId;
-                            curProject.autosave = !! utils.getParameterByName(tab.url, 'as');
-                            curProject.autoopen = !! utils.getParameterByName(tab.url, 'ao');
+                            curProject.setFromTab(tab);
 
                             console.log('FirstProjectTab', curProject);
                         } else if (tab.url == Project.StopPageUrl) {
@@ -142,18 +135,10 @@ define(
                                 return l.url === tab.url;
                             });
                             if (link === null) {
-                                link = {
-                                    url: tab.url,
-                                    bookmarked: false
-                                };
+                                link = new Link();
                                 curProject.links.push(link);
                             }
-                            link.title = tab.title;
-                            link.favIconUrl = tab.favIconUrl;
-                            link.tabId = tab.id;
-                            link.tabIndex = tab.index;
-                            link.tabWindowId = tab.windowId;
-                            link.active = true;
+                            link.setFromTab(tab);
                             console.log('Link entry', link);
                         }
                     });
