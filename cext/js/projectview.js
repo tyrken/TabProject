@@ -22,18 +22,19 @@ require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/L
     console.log("Loaded project via require");
 
     var project = null;
+    var projects = [];
     var projectName = utils.getParameterByName(window.location.search, 'name');
 
     var draggedProject = null;
     var draggedLink = null;
 
-    function displayProjectSettings(proj) {
-        $('#autosave').prop('checked', proj.autosave);
-        $('#autoopen').prop('checked', proj.autoopen);
-        $('#saveAll').prop('enabled', !proj.autosave);
-        document.title = proj.name.escapeForHtml();
-        $('#projectName').text(proj.name);
-        window.history.replaceState({}, proj.name, proj.url);
+    function displayProjectSettings() {
+        $('#autosave').prop('checked', project.autosave);
+        $('#autoopen').prop('checked', project.autoopen);
+        $('#saveAll').prop('enabled', !project.autosave);
+        document.title = project.name.escapeForHtml();
+        $('#projectName').text(project.name);
+        window.history.replaceState({}, project.name, project.url);
     }
 
     function findLinkInProject(proj, anchor) {
@@ -67,28 +68,26 @@ require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/L
         return targetProject;
     }
 
-    function createProjectSubwindow(project, anchor) {
-        var link = findLinkInProject(project, anchor);
+    function createProjectSubwindow(proj, anchor) {
+        var link = findLinkInProject(proj, anchor);
         if (link) {
             chrome.tabs.create({
                     url: link.url,
-                    windowId: project.tabWindowId,
-                    index: project.tabIndex + 1,
-                    openerTabId: project.tabId,
+                    windowId: proj.tabWindowId,
+                    index: proj.tabIndex + 1,
+                    openerTabId: proj.tabId,
                     active: false
                 },
                 function(tab) {
                     anchor.attr('class', 'active');
-                    link.active = true;
-                    link.tabId = tab.id;
-                    link.tabIndex = tab.index;
-                    link.tabWindowId = tab.windowId;
+                    link.setFromTab(tab);
                 });
         }
 
     }
 
-    function displayProjects(projects) {
+    function displayProjects(allProjects) {
+        projects = allProjects;
         project = projects.findObject(function(p) {
             return p.name === projectName;
         });
@@ -144,9 +143,7 @@ require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/L
                     index: 999,
                     active: false
                 }, function(tab) {
-                    targetProject.tabId = tab.id;
-                    targetProject.tabWindowId = tab.windowId;
-                    targetProject.tabIndex = tab.index;
+                    targetProject.setFromTab(tab);
 
                     createProjectSubwindow(targetProject, anchor);
                 });
@@ -188,10 +185,7 @@ require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/L
             }
 
             var tidyDraggedTab = function(node) {
-                draggedLink.bookmarkId = node.id;
-                draggedLink.bookmarkIndex = node.index;
-                draggedLink.bookmarkParentId = node.parentId;
-                draggedLink.bookmarked = true;
+                link.setFromBookmark(node);
 
                 if (draggedLink.tabId) {
                     if (targetProject.tabWindowId) {
@@ -199,12 +193,11 @@ require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/L
                             windowId: targetProject.tabWindowId,
                             index: targetProject.tabIndex + 1
                         }, function(tab) {
-                            draggedLink.tabId = tab.id;
-                            draggedLink.tabIndex = tab.index;
-                            draggedLink.tabWindowId = tab.windowId;
+                            draggedLink.setFromTab(tab);
                         });
                     } else {
                         chrome.tabs.remove(draggedLink.tabId);
+                        // TODO refactor to member func
                         draggedLink.active = false;
                         delete draggedLink.tabId;
                         delete draggedLink.tabIndex;
@@ -283,37 +276,32 @@ require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/L
 
     $('#saveAll').on('click', function(event) {
         tp.makeBookmarks(projectName, function() {
-            tp.lookupProjectContent(projectName, function(project) {
-                displayProjectContent(project);
-                alert("Saved " + projectName);
-            });
+            refresh();
+            alert("Saved " + projectName);
         });
     });
 
     $('#close').on('click', function(event) {
-        tp.lookupProjectContent(projectName, function(project) {
-            var unsaved = [];
+        var unsaved = [];
+        project.links.forEach(function(link) {
+            if (link.active && !link.bookmarked) {
+                unsaved.push(link);
+            }
+        });
+        var answer = true;
+        if (unsaved.length > 0) {
+            this.answer = confirm(unsaved.length + " unsaved content in " + projectName + " project, continue to close project?");
+        }
+        if (answer === true) {
+            console.log("Closing project " + projectName);
+            var tabIds = [project.tabId];
             project.links.forEach(function(link) {
-                if (link.active && !link.bookmarked) {
-                    unsaved.push(link);
+                if (link.active && link.tabId >= 1) {
+                    tabIds.push(link.tabId);
                 }
             });
-            var answer = true;
-            if (unsaved.length > 0) {
-                displayProjectContent(project);
-                this.answer = confirm(unsaved.length + " unsaved content in " + projectName + " project, continue to close project?");
-            }
-            if (answer === true) {
-                console.log("Closing project " + projectName);
-                var tabIds = [project.tabId];
-                project.links.forEach(function(link) {
-                    if (link.active && link.tabId >= 1) {
-                        tabIds.push(link.tabId);
-                    }
-                });
-                chrome.tabs.remove(tabIds);
-            }
-        }, projectName);
+            chrome.tabs.remove(tabIds);
+        }
     });
 
 });
