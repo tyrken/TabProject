@@ -101,15 +101,24 @@ require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/L
         }
         newHtml.push('</ul></div><div class="span6"><div class="accordion" id="otherProjects">');
 
+        var openedBlock = $('#projectContent .in').closest('.accordion-group').find('.accordion-toggle');
+        var openedName = null;
+        if (openedBlock.length) {
+            openedName = openedBlock.text();
+            console.log("Got opened", openedName);
+        }
+
         for (var i = 0; i < projects.length; i++) {
             if (projects[i] !== project) {
                 var localLink = "collapse" + i;
-                newHtml.push('<div class="accordion-group"><div class="accordion-heading"><a class="accordion-toggle" data-toggle="collapse" data-parent="#otherProjects" href="#' + localLink + '">' + projects[i].name.escapeForHtml() + '</a></div><div id="' + localLink + '" class="accordion-body collapse"><div class="accordion-inner"><ul class="projectContent clearfix">');
+                var bodyClass = (projects[i].name == openedName ? " in" : "");
+                newHtml.push('<div class="accordion-group"><div class="accordion-heading"><a class="accordion-toggle" data-toggle="collapse" data-parent="#otherProjects" href="#' + localLink + '">' + projects[i].name.escapeForHtml() + '</a></div><div id="' + localLink + '" class="accordion-body collapse'+bodyClass+'"><div class="accordion-inner"><ul class="projectContent clearfix">');
                 projects[i].links.forEach(appendLinkHTML);
                 newHtml.push('</ul></div></div></div>');
             }
         }
         newHtml.push('</div></div></div>');
+
         $('#projectContent').html(newHtml.join(''));
 
         $('i[class="icon-star-empty"]').on('click', function(event) {
@@ -236,7 +245,6 @@ require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/L
     }
 
     function refresh() {
-        // TODO: Remember state of accordian
         tp.getProjectsFromDBAndTabs(displayProjects);
     }
 

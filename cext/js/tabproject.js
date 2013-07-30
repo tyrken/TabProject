@@ -21,7 +21,7 @@ define(
                 var projects = [];
                 var curProject = null;
                 tabs.forEach(function(tab) {
-                    console.log('TAB index=' + tab.index + ', title=' + tab.title);
+                    //console.log('TAB index=' + tab.index + ', title=' + tab.title);
                     if (tab.index === 0) {
                         curProject = null;
                     }
@@ -29,14 +29,14 @@ define(
                         curProject = new Project();
                         curProject.setFromTab(tab);
                         projects.push(curProject);
-                        console.log('FirstProjectTab', curProject);
+                        //console.log('FirstProjectTab', curProject);
                     } else if (tab.url == Project.StopPageUrl) {
                         curProject = null;
                     } else if (curProject !== null) {
                         var link = new Link();
                         link.setFromTab(tab);
                         curProject.links.push(link);
-                        console.log('ProjectTab', link);
+                        //console.log('ProjectTab', link);
                     }
                 });
                 console.log('Finished scanTabs', projects);
@@ -112,7 +112,7 @@ define(
                     var curProject = nullProject;
                     projects.unshift(nullProject);
                     tabs.forEach(function(tab) {
-                        console.log('TAB index=' + tab.index + ', title=' + tab.title);
+                        // console.log('TAB index=' + tab.index + ', title=' + tab.title);
                         if (tab.index === 0) {
                             curProject = nullProject;
                         }
@@ -127,7 +127,7 @@ define(
                             }
                             curProject.setFromTab(tab);
 
-                            console.log('FirstProjectTab', curProject);
+                            //console.log('FirstProjectTab', curProject);
                         } else if (tab.url == Project.StopPageUrl) {
                             curProject = nullProject;
                         } else {
@@ -139,7 +139,7 @@ define(
                                 curProject.links.push(link);
                             }
                             link.setFromTab(tab);
-                            console.log('Link entry', link);
+                            //console.log('Link entry', link);
                         }
                     });
                     if (nullProject.links.length === 0) {
