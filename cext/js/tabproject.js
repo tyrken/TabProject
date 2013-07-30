@@ -169,7 +169,7 @@ define(
 
         my.saveBookmark = function(project, url, title, callback) {
             ichrome.bookmarks.create({
-                parentId: project.folderBookmarkId,
+                parentId: project.bookmarkParentId,
                 title: title,
                 url: url
             }, function(newProjectNode) {
@@ -296,7 +296,7 @@ define(
               var projectNode = nodes.findObject(function(n) {
                 return n.title === projectName;
               });
-              project.folderBookmarkId = projectNode.id;
+              project.bookmarkParentId = projectNode.id;
               ichrome.bookmarks.getChildren(projectNode.id, function(nodes) {
                 project.links.forEach(function(link) {
                   link.bookmarked = nodes.findObject(function(n) {

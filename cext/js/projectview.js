@@ -49,14 +49,9 @@ require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/L
         var targetProject = project;
         var clickedProjectName = null;
 
-        var accordianHeader = element.parents('.accordion-group');
+        var accordianHeader = element.closest('.accordion-group');
         if (accordianHeader.length) {
             clickedProjectName = $(accordianHeader).find('.accordion-toggle').text();
-        } else if (element.hasClass('accordion-group')) {
-            clickedProjectName = element.find('.accordion-toggle').text();
-        }
-
-        if (clickedProjectName !== null) {
             targetProject = projects.findObject(function(p) {
                 return p.name === clickedProjectName;
             });
@@ -167,25 +162,31 @@ require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/L
             draggedProject = findContainingProject(anchor);
             draggedLink = findLinkInProject(draggedProject, anchor);
 
-            event.dataTransfer.effectAllowed = 'move';
-            event.dataTransfer.setData('text/html', anchor.href);
+            var dt = event.originalEvent.dataTransfer;
+            dt.effectAllowed = 'move';
+            dt.setData('text/html', anchor.href);
+            console.log("In dragstart, moving", draggedLink);
         }).on('dragover', function(event) {
             event.preventDefault();
         }).on('drop', '.accordion-group, a', function(event) {
             event.preventDefault();
             var element = $(this);
             var targetProject = findContainingProject(element);
-            var link = null;
-            var destFolderId = targetProject.folderBookmarkId;
+            var targetLink = null;
+            var destFolderId = targetProject.bookmarkParentId;
             var destBookmarkIndex = 0;
-            if (!element.hasClass('accordion-group')) {
-                link = findLinkInProject(targetProject, element);
-                destFolderId = link.bookmarkParentId;
-                destBookmarkIndex = link.bookmarkIndex;
+
+            var anchor = element.closest('a');
+            if (anchor.length && !anchor.first().attr('href').startsWith('#')) {
+                targetLink = findLinkInProject(targetProject, anchor.first());
+                destFolderId = targetLink.bookmarkParentId;
+                destBookmarkIndex = targetLink.bookmarkIndex;
             }
 
             var tidyDraggedTab = function(node) {
-                link.setFromBookmark(node);
+                draggedLink.setFromBookmark(node);
+
+                console.log("In tidyDraggedTab", draggedLink);
 
                 if (draggedLink.tabId) {
                     if (targetProject.tabWindowId) {
@@ -194,6 +195,7 @@ require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/L
                             index: targetProject.tabIndex + 1
                         }, function(tab) {
                             draggedLink.setFromTab(tab);
+                            refresh();
                         });
                     } else {
                         chrome.tabs.remove(draggedLink.tabId);
@@ -202,28 +204,31 @@ require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/L
                         delete draggedLink.tabId;
                         delete draggedLink.tabIndex;
                         delete draggedLink.tabWindowId;
+                        refresh();
                     }
                 }
 
-                draggedProject = draggedLink = null;
             };
 
             if (draggedLink.bookmarkId) {
+                console.log("In drop, moving", draggedLink);
                 chrome.bookmarks.move(draggedLink.bookmarkId, {
                     parentId: destFolderId,
                     index: destBookmarkIndex
                 }, tidyDraggedTab);
             } else {
+                console.log("In drop, creating", draggedLink);
                 chrome.bookmarks.create({
                     parentId: destFolderId,
                     index: destBookmarkIndex,
-                    title: link.title,
-                    url: link.url
+                    title: draggedLink.title,
+                    url: draggedLink.url
                 }, tidyDraggedTab);
             }
 
         }).on('dragend', function(event) {
-            draggedProject = draggedLink = null;
+            console.log("In dragend", draggedLink);
+            //draggedProject = draggedLink = null;
             // remove any border drop-highlights
         });
 
@@ -235,6 +240,13 @@ require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/L
         tp.getProjectsFromDBAndTabs(displayProjects);
     }
 
+    function tabEventListener(tabId, info) {
+        if (project !== null && tabId === project.tabId) {
+            console.log("Refreshing due to move/attach", info);
+            refresh();
+        }
+    }
+
     $(document).ready(function() {
         refresh();
 
@@ -242,10 +254,12 @@ require(['jquery', 'bootstrap', 'js/tabproject', 'js/utils', 'js/Project', 'js/L
             console.log("onActivated with", info);
             console.log("onActivated with project", project);
             if (project !== null && info.tabId === project.tabId && info.windowId === project.tabWindowId) {
-                console.log("Refreshing due to", info);
+                console.log("Refreshing due to activation", info);
                 refresh();
             }
         });
+        chrome.tabs.onAttached.addListener(tabEventListener);
+        chrome.tabs.onMoved.addListener(tabEventListener);
     });
 
     $('input:checkbox').on('click', function(event) {

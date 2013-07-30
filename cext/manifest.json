@@ -3,7 +3,7 @@
 
   "name": "TabProject",
   "description": "This extension stores project-like collections of tabs to the browser bookmarks.",
-  "version": "1.0",
+  "version": "1.1",
 
   "icons": {
     "16": "img/icon16.png",
