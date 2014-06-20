@@ -44,6 +44,33 @@ define(
             });
         };
 
+        my.normaliseDB = function(callback) {
+            ichrome.bookmarks.getChildren(bookmarkBarId, function(nodes) {
+                var baseNode = nodes.findObject(function(n) {
+                    return n.title === baseBookMarkName;
+                });
+                if (baseNode !== null) {
+                    ichrome.bookmarks.getChildren(baseNode.id, function(projectParentNodes) {
+                        var counter = projectParentNodes.length;
+                        projectParentNodes.forEach(function(projectParentNode) {
+                            var project = new Project();
+                            project.setFromFolderBookmark(projectParentNode);
+                            ichrome.bookmarks.getChildren(projectParentNode.id, function(nodes) {
+                                for (var i = 0, j = nodes.length; i < j; ++i) {
+                                    var n = nodes[i];
+                                    if (Project.normliseUrl(n.url)) {
+                                        project.setFromBookmark(n);
+                                        nodes.splice(i, 1);
+                                        break;
+                                    }
+                                }
+                            });
+                        });
+                    });
+                }
+            });
+        };
+
         my.enumerateProjectsFromDB = function(callback) {
             ichrome.bookmarks.getChildren(bookmarkBarId, function(nodes) {
                 var baseNode = nodes.findObject(function(n) {

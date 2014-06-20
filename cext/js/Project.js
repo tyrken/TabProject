@@ -36,6 +36,15 @@ define(['js/Link', 'js/utils', 'ichrome'], function(Link, utils, ichrome) {
         return utils.startsWith(url, ProjectPageBase);
     };
 
+    Project.normaliseUrl = function(url) {
+        if (Project.isProjectPageUrl(url)) {
+            return false;
+        }
+        if (utils.startsWith(url, 'chrome-extension://') && utils.contains('/project.html?name=')) {
+
+        }
+    };
+
     function parseUrl(proj) {
         proj.autosave = !! utils.getParameterByName(proj.url, 'as');
         proj.autoopen = !! utils.getParameterByName(proj.url, 'ao');

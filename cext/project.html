@@ -1,9 +1,10 @@
 <!doctype html>
-<html>
+<html lang="en">
     <head>
         <title>TabProject Page</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <link href="css/bootstrap.min.css" rel="stylesheet" media="screen">
+        <link href="css/bootstrap-responsive.min.css" rel="stylesheet" media="screen">
         <script src="/lib/require.js" data-main="/js/projectview"></script>
         <style>
           body {
@@ -22,30 +23,26 @@
           .projectContent .active {
             font-weight: bold;
           }
-
         </style>
     </head>
     <body>
-        <div class="row-fluid" >
-            <div class="span12">
-                <h1>Tab Project: <span id='projectName'></span></h1>
-                <form id="actions">
-                    <input type="button" id="openAll" value="Open All"/>
-                    <input type="button" id="saveAll" value="Save Project"/>
-                    <input type="button" id="close" value="Close Project"/>
-                </form>
-                <hr/>
+        <div class="contadiner">
+            <div class="row-fluid" >
+                <div class="span12 well well-small">
+                    <h1>Tab Project: <span id='projectName'></span></h1>
+                    <button class="btn btn-primary" type="button" id="openAll">Open All</button>
+                    <button class="btn btn-primary" type="button" id="saveAll">Save Project</button>
+                    <button class="btn btn-primary" type="button" id="close">Close Project</button>
+                </div>
             </div>
-        </div>
-        <div id='projectContent'></div>
-        <div class="row-fluid" >
-            <div class="span12">
-            <hr/>
-            <form id="options">
-                <input type="button" id="archive" value="Archive Project"/>
-                <input type="checkbox" id="autosave">Auto Save tabs to Project</input>
-                <input type="checkbox" id="autoload">Auto Load this Project at startup</input>
-            </form>
+            <div id='projectContent'></div>
+            <div class="row-fluid" >
+                <div class="span12">
+                    <hr/>
+                    <button class="btn btn-primary" type="button" id="archive">Archive Project</button>
+                    <input type="checkbox" id="autosave">Auto Save tabs to Project</input>
+                    <input type="checkbox" id="autoload">Auto Load this Project at startup</input>
+                </div>
             </div>
         </div>
     </body>
